@@ -34,8 +34,9 @@ import id.asmaraputra.fieldstamp.R
 private object Palette {
     val ink = Color(0xFF0E5A6B)
     val inkLight = Color(0xFF7FC8D8)
-    val hiVis = Color(0xFFF2A900)
-    val onHiVis = Color(0xFF1A1300)
+    /** Signal yellow: capture action only (shutter, "Ambil foto"). */
+    val hiVis = Color(0xFFFFC21A)
+    val onHiVis = Color(0xFF1A1F24)
 }
 
 private val LightColors = lightColorScheme(
@@ -122,17 +123,18 @@ val PlexMono = FontFamily(
 
 private val AppTypography = Typography(
     displaySmall = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 36.sp),
-    headlineMedium = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 26.sp, lineHeight = 32.sp),
+    headlineMedium = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp),
     headlineSmall = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp),
-    titleLarge = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp),
-    titleMedium = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 22.sp),
+    titleLarge = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp),
+    titleMedium = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp),
     titleSmall = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
     bodyLarge = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
     bodyMedium = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp),
     bodySmall = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 17.sp),
-    labelLarge = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp),
+    labelLarge = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
     labelMedium = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp),
-    labelSmall = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp),
+    /** Also the section-header style (set in uppercase). */
+    labelSmall = TextStyle(fontFamily = PlexSans, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.8.sp),
 )
 
 private val AppShapes = Shapes(
@@ -157,12 +159,18 @@ object Spacing {
     val gutter: Dp = 16.dp
     /** Minimum touch target. */
     val touch: Dp = 48.dp
+    /** Minimum list-row height. */
+    val row: Dp = 56.dp
+    /** Height of the capture action ("Ambil foto"). */
+    val capture: Dp = 64.dp
 }
 
 @Immutable
 data class ExtendedColors(
     val capture: Color,
     val onCapture: Color,
+    /** 2-dp edge that keeps the yellow capture button visible on light backgrounds in sunlight. */
+    val captureEdge: Color,
     val success: Color,
     val warning: Color,
     val onWarningContainer: Color,
@@ -172,6 +180,7 @@ data class ExtendedColors(
 private val LightExtended = ExtendedColors(
     capture = Palette.hiVis,
     onCapture = Palette.onHiVis,
+    captureEdge = Palette.onHiVis,
     success = Color(0xFF1E6B3A),
     warning = Color(0xFF8A5A00),
     warningContainer = Color(0xFFFFF0D1),
@@ -181,6 +190,7 @@ private val LightExtended = ExtendedColors(
 private val DarkExtended = ExtendedColors(
     capture = Palette.hiVis,
     onCapture = Palette.onHiVis,
+    captureEdge = Color.Transparent,
     success = Color(0xFF8AD5A0),
     warning = Color(0xFFFFC24D),
     warningContainer = Color(0xFF3D2C06),
@@ -188,11 +198,13 @@ private val DarkExtended = ExtendedColors(
 )
 
 @Immutable
-data class MonoStyles(val small: TextStyle, val medium: TextStyle)
+data class MonoStyles(val small: TextStyle, val medium: TextStyle, val label: TextStyle)
 
 private val Mono = MonoStyles(
-    small = TextStyle(fontFamily = PlexMono, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp),
-    medium = TextStyle(fontFamily = PlexMono, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp),
+    small = TextStyle(fontFamily = PlexMono, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp),
+    medium = TextStyle(fontFamily = PlexMono, fontWeight = FontWeight.Medium, fontSize = 15.sp, lineHeight = 22.sp),
+    /** Small uppercase machine label, e.g. "KAMIS · WIB" above the date masthead. */
+    label = TextStyle(fontFamily = PlexMono, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 1.2.sp),
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { LightExtended }

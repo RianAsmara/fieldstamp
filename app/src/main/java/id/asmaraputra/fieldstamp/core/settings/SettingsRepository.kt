@@ -23,6 +23,10 @@ data class AppSettings(
     val embedGpsInExif: Boolean = true,
     /** Look up a place name for new photos (sends coordinates to the device's geocoding service). */
     val autoPlaceName: Boolean = true,
+    /** Open the camera straight away when the app is launched from the launcher. */
+    val openCameraOnLaunch: Boolean = true,
+    /** False until the app has been opened once; the very first launch shows Home instead of the camera. */
+    val launchedBefore: Boolean = false,
     val currentProjectId: Long? = null,
     val currentActivityId: Long? = null,
     val organizationName: String = "",
@@ -44,6 +48,8 @@ class SettingsRepository(private val context: Context) {
         val recordLocation = booleanPreferencesKey("record_location")
         val embedGps = booleanPreferencesKey("embed_gps_exif")
         val autoPlace = booleanPreferencesKey("auto_place_name")
+        val openCamera = booleanPreferencesKey("open_camera_on_launch")
+        val launchedBefore = booleanPreferencesKey("launched_before")
         val currentProject = longPreferencesKey("current_project_id")
         val currentActivity = longPreferencesKey("current_activity_id")
         val organizationName = stringPreferencesKey("organization_name")
@@ -62,6 +68,8 @@ class SettingsRepository(private val context: Context) {
             recordLocation = p[Keys.recordLocation] ?: true,
             embedGpsInExif = p[Keys.embedGps] ?: true,
             autoPlaceName = p[Keys.autoPlace] ?: true,
+            openCameraOnLaunch = p[Keys.openCamera] ?: true,
+            launchedBefore = p[Keys.launchedBefore] ?: false,
             currentProjectId = p[Keys.currentProject],
             currentActivityId = p[Keys.currentActivity],
             organizationName = p[Keys.organizationName].orEmpty(),
@@ -89,6 +97,10 @@ class SettingsRepository(private val context: Context) {
     suspend fun setEmbedGps(value: Boolean) = edit { it[Keys.embedGps] = value }
 
     suspend fun setAutoPlaceName(value: Boolean) = edit { it[Keys.autoPlace] = value }
+
+    suspend fun setOpenCameraOnLaunch(value: Boolean) = edit { it[Keys.openCamera] = value }
+
+    suspend fun markLaunched() = edit { it[Keys.launchedBefore] = true }
 
     suspend fun setCaptureContext(projectId: Long?, activityId: Long?) = edit {
         if (projectId == null) it.remove(Keys.currentProject) else it[Keys.currentProject] = projectId

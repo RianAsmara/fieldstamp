@@ -26,6 +26,10 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import id.asmaraputra.fieldstamp.R
+import id.asmaraputra.fieldstamp.core.model.Formats
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,6 +159,7 @@ fun ErrorState(title: String, body: String, modifier: Modifier = Modifier, onRet
     )
 }
 
+/** Small uppercase label above a group of rows. */
 @Composable
 fun SectionHeader(text: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
     Row(
@@ -161,8 +167,8 @@ fun SectionHeader(text: String, modifier: Modifier = Modifier, trailing: (@Compo
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text,
-            style = MaterialTheme.typography.titleSmall,
+            text.uppercase(Formats.locale),
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f).semantics { heading() },
         )
@@ -352,4 +358,24 @@ fun FsExtendedFab(label: String, icon: ImageVector, onClick: () -> Unit, trailin
         },
         modifier = Modifier.semantics { contentDescription = label },
     )
+}
+
+/**
+ * The capture action ("Ambil foto"). The only place besides the shutter that uses the signal yellow,
+ * so it is always the most visible control on screen.
+ */
+@Composable
+fun CaptureButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val ext = FieldStampTheme.extended
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = ext.capture, contentColor = ext.onCapture),
+        border = BorderStroke(2.dp, ext.captureEdge),
+        shape = MaterialTheme.shapes.medium,
+        modifier = modifier.heightIn(min = Spacing.capture),
+    ) {
+        Icon(Icons.Outlined.PhotoCamera, contentDescription = null)
+        Spacer(Modifier.width(Spacing.sm))
+        Text(label, style = MaterialTheme.typography.titleMedium)
+    }
 }

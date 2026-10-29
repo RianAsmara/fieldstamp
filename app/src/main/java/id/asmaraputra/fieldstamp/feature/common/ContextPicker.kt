@@ -1,6 +1,10 @@
 package id.asmaraputra.fieldstamp.feature.common
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,30 +48,53 @@ import id.asmaraputra.fieldstamp.core.designsystem.Spacing
 import id.asmaraputra.fieldstamp.core.model.FieldActivity
 import id.asmaraputra.fieldstamp.core.model.Project
 
-/** A compact "label: value ▾" field that opens a picker. */
+/**
+ * "Label  value  ⇕" row that opens a picker. The label sits in a fixed left column; at large font scales
+ * it moves above the value so neither truncates.
+ */
 @Composable
-fun PickerField(label: String, value: String, onClick: () -> Unit, modifier: Modifier = Modifier, placeholder: Boolean = false) {
+fun PickerField(
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: Boolean = false,
+    icon: ImageVector = Icons.Outlined.UnfoldMore,
+) {
+    val stacked = LocalDensity.current.fontScale >= 1.3f
+    val labelText = @Composable {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    val valueText = @Composable { m: Modifier ->
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = if (placeholder) FontWeight.Normal else FontWeight.Medium),
+            color = if (placeholder) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = m,
+        )
+    }
     Row(
         modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 56.dp)
+            .heightIn(min = Spacing.row)
             .padding(horizontal = Spacing.gutter, vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (placeholder) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (stacked) {
+            Column(Modifier.weight(1f)) { labelText(); valueText(Modifier) }
+        } else {
+            Box(Modifier.width(LABEL_COLUMN)) { labelText() }
+            valueText(Modifier.weight(1f))
         }
-        Icon(Icons.Outlined.UnfoldMore, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(Spacing.sm))
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+private val LABEL_COLUMN = 88.dp
 
 data class PickerOption(val id: Long?, val label: String, val supporting: String? = null)
 

@@ -16,6 +16,7 @@ object Formats {
 
     private val dayHeading = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale)
     private val shortDate = DateTimeFormatter.ofPattern("d MMM yyyy", locale)
+    private val longDate = DateTimeFormatter.ofPattern("d MMMM yyyy", locale)
     private val stampDate = DateTimeFormatter.ofPattern("dd/MM/yyyy", locale)
     private val time24 = DateTimeFormatter.ofPattern("HH:mm", locale)
     private val time12 = DateTimeFormatter.ofPattern("hh:mm a", Locale.US)
@@ -24,6 +25,7 @@ object Formats {
 
     fun dayHeading(date: LocalDate): String = dayHeading.format(date)
     fun shortDate(date: LocalDate): String = shortDate.format(date)
+    fun longDate(date: LocalDate): String = longDate.format(date)
     fun monthYear(month: YearMonth): String = monthYear.format(month)
     fun monthName(month: Int): String = java.time.Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale)
     fun fileStamp(time: ZonedDateTime): String = fileStamp.format(time)

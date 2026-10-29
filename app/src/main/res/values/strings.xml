@@ -74,11 +74,13 @@
     <string name="context_no_activity">Tanpa kegiatan</string>
 
     <!-- Home -->
-    <string name="home_context_hint">Foto baru dicatat ke proyek dan kegiatan ini.</string>
-    <string name="home_template_active">Template aktif: %1$s</string>
-    <string name="home_template_basic">Stempel teks dasar aktif. Atur template di Setelan.</string>
     <string name="home_today">Hari ini</string>
-    <string name="home_today_empty">Belum ada foto hari ini.</string>
+    <string name="settings_open_camera">Buka kamera saat aplikasi dibuka</string>
+    <string name="settings_open_camera_hint">Tutup kamera untuk ke Beranda. Matikan bila lebih sering menyusun laporan.</string>
+    <string name="home_today_empty_title">Belum ada foto.</string>
+    <string name="home_today_empty_body">Foto yang diambil tersimpan di perangkat ini, lalu dikelompokkan per hari untuk laporan bulanan.</string>
+    <string name="home_projects_empty">Buat proyek untuk mengelompokkan foto</string>
+    <string name="home_templates_empty">Impor bingkai PNG dari Canva atau aplikasi desain lain</string>
     <string name="home_manage">Kelola</string>
     <string name="home_report_hint">Susun laporan bulanan dari foto Anda</string>
     <string name="import_failed">Gambar tidak dapat dibuka. Pilih berkas JPEG atau PNG lain.</string>
@@ -115,6 +117,9 @@
     <string name="camera_flash_auto">Lampu kilat: otomatis</string>
     <string name="camera_flash_on">Lampu kilat: menyala</string>
     <string name="camera_flash_off">Lampu kilat: mati</string>
+    <string name="camera_change_template">Ganti template: %1$s</string>
+    <string name="camera_change_context">Ganti proyek: %1$s</string>
+    <string name="camera_context_title">Foto berikutnya dicatat ke</string>
     <string name="gps_off">Lokasi mati</string>
     <string name="gps_no_permission">Izinkan lokasi</string>
     <string name="gps_disabled">Layanan lokasi mati</string>
@@ -145,7 +150,7 @@
     <string name="review_time_device">Waktu dari jam perangkat saat pemotretan.</string>
     <string name="review_time_from_file">Waktu dari data EXIF berkas.</string>
     <string name="review_time_import_fallback">Berkas tidak memiliki waktu pemotretan. Waktu impor dipakai.</string>
-    <string name="review_location_none">Tidak ada lokasi</string>
+    <string name="review_location_none">Tidak dicatat</string>
     <string name="review_location_none_import">Berkas tidak memiliki data lokasi</string>
     <string name="review_include_location">Sertakan koordinat</string>
     <string name="review_include_location_hint">Matikan bila lokasi tidak boleh dicatat untuk foto ini.</string>

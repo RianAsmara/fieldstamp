@@ -110,6 +110,7 @@ class SettingsViewModel(private val c: AppContainer) : ViewModel() {
     fun setRecordLocation(v: Boolean) = viewModelScope.launch { c.settings.setRecordLocation(v) }
     fun setEmbedGps(v: Boolean) = viewModelScope.launch { c.settings.setEmbedGps(v) }
     fun setAutoPlace(v: Boolean) = viewModelScope.launch { c.settings.setAutoPlaceName(v) }
+    fun setOpenCamera(v: Boolean) = viewModelScope.launch { c.settings.setOpenCameraOnLaunch(v) }
     fun setPreparedBy(v: String) = viewModelScope.launch { c.settings.setPreparedBy(v) }
     fun setOrganization(v: String) = viewModelScope.launch { c.settings.setOrganizationName(v) }
     fun setDebugPro(v: Boolean) = viewModelScope.launch { if (BuildConfig.DEBUG) c.settings.setDebugProOverride(v) }
@@ -178,6 +179,7 @@ fun SettingsScreen(nav: NavController) {
         val s = settings ?: return@Scaffold
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
             SectionHeader(stringResource(R.string.settings_capture))
+            SwitchRow(stringResource(R.string.settings_open_camera), s.openCameraOnLaunch, vm::setOpenCamera, supporting = stringResource(R.string.settings_open_camera_hint))
             SwitchRow(stringResource(R.string.settings_record_location), s.recordLocation, vm::setRecordLocation, supporting = stringResource(R.string.settings_record_location_hint))
             SwitchRow(stringResource(R.string.settings_embed_gps), s.embedGpsInExif, vm::setEmbedGps, supporting = stringResource(R.string.settings_embed_gps_hint))
             SwitchRow(stringResource(R.string.settings_auto_place), s.autoPlaceName, vm::setAutoPlace, supporting = stringResource(R.string.settings_auto_place_hint))

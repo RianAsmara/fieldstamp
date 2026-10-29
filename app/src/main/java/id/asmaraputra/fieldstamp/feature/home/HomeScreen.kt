@@ -21,13 +21,13 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PostAdd
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -40,7 +40,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -57,10 +56,13 @@ import id.asmaraputra.fieldstamp.app.CameraRoute
 import id.asmaraputra.fieldstamp.app.PhotoDetailRoute
 import id.asmaraputra.fieldstamp.app.PhotosRoute
 import id.asmaraputra.fieldstamp.app.ProjectsRoute
+import id.asmaraputra.fieldstamp.app.ReportBuilderRoute
 import id.asmaraputra.fieldstamp.app.ReportCreateRoute
 import id.asmaraputra.fieldstamp.app.TemplatesRoute
 import id.asmaraputra.fieldstamp.app.appViewModel
+import id.asmaraputra.fieldstamp.core.designsystem.CaptureButton
 import id.asmaraputra.fieldstamp.core.designsystem.FieldStampTheme
+import id.asmaraputra.fieldstamp.core.designsystem.LoadingState
 import id.asmaraputra.fieldstamp.core.designsystem.FsDivider
 import id.asmaraputra.fieldstamp.core.designsystem.ListRow
 import id.asmaraputra.fieldstamp.core.designsystem.PhotoThumbnail
@@ -74,6 +76,10 @@ import id.asmaraputra.fieldstamp.core.model.Project
 import id.asmaraputra.fieldstamp.core.model.StampTemplate
 import id.asmaraputra.fieldstamp.feature.common.ProjectActivityFields
 import id.asmaraputra.fieldstamp.feature.common.rememberPhotoImport
+import id.asmaraputra.fieldstamp.feature.reports.StatusIcon
+import id.asmaraputra.fieldstamp.feature.reports.statusLabel
+import id.asmaraputra.fieldstamp.feature.templates.TemplatePickerField
+import id.asmaraputra.fieldstamp.report.ReportSummary
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -82,6 +88,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.time.format.TextStyle
 
 data class HomeState(
     val today: LocalDate = LocalDate.now(),
@@ -93,6 +101,8 @@ data class HomeState(
     val templates: List<StampTemplate> = emptyList(),
     val selectedTemplateId: Long? = null,
     val totalPhotos: Int = 0,
+    val latestReport: ReportSummary? = null,
+    val loaded: Boolean = false,
 )
 
 class HomeViewModel(private val c: AppContainer) : ViewModel() {
@@ -104,8 +114,8 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
         c.projects.observeProjects(),
         c.projects.observeActivities(),
         today.flatMapLatest { day -> c.photos.observeDay(day) },
-        combine(c.templates.observeAll(), c.photos.observeCount(), ::Pair),
-    ) { settings, projects, activities, todayPhotos, (templates, count) ->
+        combine(c.templates.observeAll(), c.photos.observeCount(), c.reports.observeSummaries(), ::Triple),
+    ) { settings, projects, activities, todayPhotos, (templates, count, reports) ->
         HomeState(
             projects = projects,
             activities = activities,
@@ -115,6 +125,8 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
             templates = templates,
             selectedTemplateId = settings.selectedTemplateId?.takeIf { id -> templates.any { it.id == id } },
             totalPhotos = count,
+            latestReport = reports.maxByOrNull { it.report.updatedAt },
+            loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
 
@@ -125,6 +137,8 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
     }
 
     fun setActivity(id: Long?) = viewModelScope.launch { c.settings.setCaptureContext(state.value.projectId, id) }
+
+    fun setTemplate(id: Long?) = viewModelScope.launch { c.settings.setSelectedTemplate(id) }
 
     fun createProject(name: String) = viewModelScope.launch {
         val id = c.projects.createProject(name, "")
@@ -143,114 +157,77 @@ fun HomeScreen(nav: NavController) {
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     val resources = LocalResources.current
     val import = rememberPhotoImport(nav) {
         scope.launch { snackbar.showSnackbar(resources.getString(R.string.import_failed)) }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
+        // The capture dock stays fixed above the navigation bar: the camera is always one tap away.
+        bottomBar = { CaptureDock(onCapture = { nav.navigate(CameraRoute) }, onImport = import) },
+        contentWindowInsets = WindowInsets.statusBars,
+    ) { padding ->
+        if (!state.loaded) {
+            LoadingState(Modifier.padding(padding))
+            return@Scaffold
+        }
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Masthead: product name and today's date, nothing decorative.
-            Column(Modifier.padding(horizontal = Spacing.gutter).padding(top = Spacing.xl, bottom = Spacing.md)) {
-                Text(
-                    stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    Formats.dayHeading(state.today),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.semantics { heading() },
-                )
-            }
+            Masthead(state.today)
 
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.padding(horizontal = Spacing.gutter).fillMaxWidth(),
-            ) {
-                Column(Modifier.padding(vertical = Spacing.xs)) {
-                    Text(
-                        stringResource(R.string.home_context_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.sm),
-                    )
-                    ProjectActivityFields(
-                        projects = state.projects,
-                        activities = state.activities,
-                        projectId = state.projectId,
-                        activityId = state.activityId,
-                        onProjectChange = vm::setProject,
-                        onActivityChange = vm::setActivity,
-                        onCreateProject = vm::createProject,
-                        onCreateActivity = vm::createActivity,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(Spacing.lg))
-            Button(
-                onClick = { nav.navigate(CameraRoute) },
-                colors = ButtonDefaults.buttonColors(containerColor = FieldStampTheme.extended.capture, contentColor = FieldStampTheme.extended.onCapture),
-                shape = MaterialTheme.shapes.medium,
-                contentPadding = PaddingValues(vertical = 18.dp),
-                modifier = Modifier.padding(horizontal = Spacing.gutter).fillMaxWidth(),
-            ) {
-                Icon(Icons.Outlined.PhotoCamera, contentDescription = null)
-                Spacer(Modifier.width(Spacing.sm))
-                Text(stringResource(R.string.action_take_photo), style = MaterialTheme.typography.titleMedium)
-            }
-            Spacer(Modifier.height(Spacing.sm))
-            OutlinedButton(
-                onClick = import,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.padding(horizontal = Spacing.gutter).fillMaxWidth().height(Spacing.touch),
-            ) {
-                Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null)
-                Spacer(Modifier.width(Spacing.sm))
-                Text(stringResource(R.string.action_import_photo))
-            }
-            val template = state.templates.firstOrNull { it.id == state.selectedTemplateId }
-            Text(
-                if (template != null) stringResource(R.string.home_template_active, template.name) else stringResource(R.string.home_template_basic),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.sm),
+            ProjectActivityFields(
+                projects = state.projects,
+                activities = state.activities,
+                projectId = state.projectId,
+                activityId = state.activityId,
+                onProjectChange = vm::setProject,
+                onActivityChange = vm::setActivity,
+                onCreateProject = vm::createProject,
+                onCreateActivity = vm::createActivity,
             )
+            FsDivider(inset = true)
+            TemplatePickerField(templates = state.templates, selectedId = state.selectedTemplateId, onSelect = vm::setTemplate)
+            FsDivider(inset = true)
 
             Spacer(Modifier.height(Spacing.md))
-            SectionHeader(
-                text = stringResource(R.string.home_today) + " · " + pluralStringResource(R.plurals.photo_count, state.todayPhotos.size, state.todayPhotos.size),
-                trailing = if (state.totalPhotos > 0) {
-                    { TextButton(onClick = { nav.navigate(PhotosRoute) }) { Text(stringResource(R.string.action_see_all)) } }
-                } else null,
-            )
             if (state.todayPhotos.isEmpty()) {
-                Text(
-                    stringResource(R.string.home_today_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = Spacing.gutter),
-                )
+                SectionHeader(stringResource(R.string.home_today))
+                Column(Modifier.padding(horizontal = Spacing.gutter)) {
+                    Text(
+                        stringResource(R.string.home_today_empty_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    Spacer(Modifier.height(Spacing.xs))
+                    Text(
+                        stringResource(R.string.home_today_empty_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.height(Spacing.md))
             } else {
+                SectionHeader(
+                    text = stringResource(R.string.home_today) + " · " + pluralStringResource(R.plurals.photo_count, state.todayPhotos.size, state.todayPhotos.size),
+                    trailing = { TextButton(onClick = { nav.navigate(PhotosRoute) }) { Text(stringResource(R.string.action_see_all)) } },
+                )
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = Spacing.gutter),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
                     items(state.todayPhotos, key = { it.photo.id }) { item ->
-                        Column(Modifier.width(112.dp)) {
+                        // Time sits under the thumbnail so it never covers the stamp printed on the photo.
+                        Column(Modifier.width(THUMB_WIDTH)) {
                             PhotoThumbnail(
                                 file = appFile(item.photo.thumbnailPath),
                                 contentDescription = item.photo.caption.ifBlank { stringResource(R.string.photo_no_caption) },
                                 modifier = Modifier
-                                    .size(112.dp)
+                                    .size(THUMB_WIDTH, THUMB_HEIGHT)
                                     .clickable { nav.navigate(PhotoDetailRoute(item.photo.id)) },
                             )
                             Text(
@@ -262,13 +239,27 @@ fun HomeScreen(nav: NavController) {
                         }
                     }
                 }
+                Spacer(Modifier.height(Spacing.md))
             }
 
-            Spacer(Modifier.height(Spacing.lg))
+            state.latestReport?.let { latest ->
+                FsDivider(inset = true)
+                ListRow(
+                    title = latest.report.title,
+                    supporting = statusLabel(latest.report) + " · " + pluralStringResource(R.plurals.photo_count, latest.photoCount, latest.photoCount),
+                    titleMaxLines = 2,
+                    leading = { StatusIcon(latest.report) },
+                    trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
+                    onClick = { nav.navigate(ReportBuilderRoute(latest.report.id)) },
+                )
+            }
+
+            Spacer(Modifier.height(Spacing.sm))
             SectionHeader(stringResource(R.string.home_manage))
             ListRow(
                 title = stringResource(R.string.projects_title),
-                supporting = pluralStringResource(R.plurals.project_count, state.projects.size, state.projects.size),
+                supporting = if (state.projects.isEmpty()) stringResource(R.string.home_projects_empty)
+                else pluralStringResource(R.plurals.project_count, state.projects.size, state.projects.size),
                 leading = { Icon(Icons.Outlined.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
                 onClick = { nav.navigate(ProjectsRoute) },
@@ -276,7 +267,8 @@ fun HomeScreen(nav: NavController) {
             FsDivider(inset = true)
             ListRow(
                 title = stringResource(R.string.templates_title),
-                supporting = pluralStringResource(R.plurals.template_count, state.templates.size, state.templates.size),
+                supporting = if (state.templates.isEmpty()) stringResource(R.string.home_templates_empty)
+                else pluralStringResource(R.plurals.template_count, state.templates.size, state.templates.size),
                 leading = { Icon(Icons.Outlined.Layers, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
                 onClick = { nav.navigate(TemplatesRoute) },
@@ -290,6 +282,58 @@ fun HomeScreen(nav: NavController) {
                 onClick = { nav.navigate(ReportCreateRoute) },
             )
             Spacer(Modifier.height(Spacing.xl))
+        }
+    }
+}
+
+private val THUMB_WIDTH = 120.dp
+private val THUMB_HEIGHT = 160.dp
+
+/** Weekday and time zone in mono caps, the date as the headline, then a heavy rule. Nothing decorative. */
+@Composable
+private fun Masthead(today: LocalDate) {
+    val zone = Formats.zoneLabel(ZonedDateTime.now())
+    val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, Formats.locale).uppercase(Formats.locale)
+    Column(Modifier.padding(horizontal = Spacing.gutter).padding(top = Spacing.xl)) {
+        Text(
+            "$weekday · $zone",
+            style = FieldStampTheme.mono.label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(Spacing.xs))
+        Text(
+            Formats.longDate(today),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        Spacer(Modifier.height(Spacing.md))
+        HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun CaptureDock(onCapture: () -> Unit, onImport: () -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        Column {
+            FsDivider()
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter, vertical = Spacing.md),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedIconButton(
+                    onClick = onImport,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.size(Spacing.capture),
+                ) {
+                    Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = stringResource(R.string.action_import_photo))
+                }
+                CaptureButton(
+                    label = stringResource(R.string.action_take_photo),
+                    onClick = onCapture,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }

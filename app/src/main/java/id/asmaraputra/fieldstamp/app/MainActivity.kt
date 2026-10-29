@@ -26,7 +26,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -62,11 +64,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Only a fresh launch opens the camera; recreation (rotation, process restore) keeps the back stack.
+        val openCamera = savedInstanceState == null && !intent.getBooleanExtra(EXTRA_SKIP_CAMERA, false)
         setContent {
             FieldStampTheme {
-                FieldStampApp()
+                FieldStampApp(openCameraOnStart = openCamera)
             }
         }
+    }
+
+    companion object {
+        /** Lets instrumentation tests start on Home without the camera and its permission dialog. */
+        const val EXTRA_SKIP_CAMERA = "skip_camera"
     }
 }
 
@@ -80,7 +89,16 @@ private val topLevel = listOf(
 )
 
 @Composable
-fun FieldStampApp(nav: NavHostController = rememberNavController()) {
+fun FieldStampApp(nav: NavHostController = rememberNavController(), openCameraOnStart: Boolean = false) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        if (!openCameraOnStart) return@LaunchedEffect
+        val settings = context.container.settings.current()
+        // The first launch introduces Home; later launches go straight to the camera, on top of Home
+        // so closing it lands there.
+        if (!settings.launchedBefore) context.container.settings.markLaunched()
+        else if (settings.openCameraOnLaunch) nav.navigate(CameraRoute)
+    }
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination
     val showBar = topLevel.any { item -> destination?.hierarchy?.any { it.hasRoute(item.type) } == true }

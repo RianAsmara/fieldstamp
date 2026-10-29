@@ -3,10 +3,14 @@ package id.asmaraputra.fieldstamp.feature.camera
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -24,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BrokenImage
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.TravelExplore
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
@@ -327,7 +332,9 @@ class CaptureReviewViewModel(private val c: AppContainer, private val handle: Sa
 
 /** Fixed so portrait and landscape previews never push or overlap the form. */
 private val PREVIEW_HEIGHT = 340.dp
+private val PREVIEW_COMPACT_HEIGHT = 72.dp
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CaptureReviewScreen(nav: NavController) {
     val vm = appViewModel { c, h -> CaptureReviewViewModel(c, h) }
@@ -349,33 +356,50 @@ fun CaptureReviewScreen(nav: NavController) {
     }
     BackHandler(enabled = !saving) { confirmDiscard = true }
 
+    val save = {
+        vm.save(
+            onSaved = {
+                nav.previousBackStackEntry?.savedStateHandle?.set("photoSaved", true)
+                nav.popBackStack()
+            },
+            onError = { msg -> scope.launch { snackbar.showSnackbar(msg.resolve(context)) } },
+        )
+    }
+    val canSave = !saving && !vm.fileMissing
+    // While typing, Save stays reachable in the top bar and in a toolbar riding on the keyboard.
+    val typing = WindowInsets.isImeVisible
+
     Scaffold(
-        topBar = { FsTopBar(stringResource(if (vm.imported) R.string.review_title_import else R.string.review_title), onBack = { confirmDiscard = true }) },
+        topBar = {
+            FsTopBar(stringResource(if (vm.imported) R.string.review_title_import else R.string.review_title), onBack = { confirmDiscard = true }) {
+                if (typing) TextButton(onClick = save, enabled = canSave) { Text(stringResource(R.string.action_save)) }
+            }
+        },
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
                 Row(
-                    Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = Spacing.gutter, vertical = Spacing.md),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                    Modifier.fillMaxWidth().navigationBarsPadding().imePadding().padding(horizontal = Spacing.gutter, vertical = if (typing) Spacing.sm else Spacing.md),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.End),
                 ) {
-                    OutlinedButton(onClick = { confirmDiscard = true }, enabled = !saving, modifier = Modifier.weight(1f).height(Spacing.touch)) {
-                        Text(stringResource(if (vm.imported) R.string.action_cancel else R.string.action_retake))
+                    if (!typing) {
+                        OutlinedButton(onClick = { confirmDiscard = true }, enabled = !saving, modifier = Modifier.weight(1f).height(Spacing.touch)) {
+                            Text(stringResource(if (vm.imported) R.string.action_cancel else R.string.action_retake))
+                        }
                     }
                     Button(
-                        onClick = {
-                            vm.save(
-                                onSaved = {
-                                    nav.previousBackStackEntry?.savedStateHandle?.set("photoSaved", true)
-                                    nav.popBackStack()
-                                },
-                                onError = { msg -> scope.launch { snackbar.showSnackbar(msg.resolve(context)) } },
-                            )
-                        },
-                        enabled = !saving && !vm.fileMissing,
-                        modifier = Modifier.weight(1f).height(Spacing.touch),
+                        onClick = save,
+                        enabled = canSave,
+                        modifier = (if (typing) Modifier else Modifier.weight(1f)).height(Spacing.touch),
                     ) {
                         if (saving) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
-                        else Text(stringResource(R.string.action_save))
+                        else {
+                            if (typing) {
+                                Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(Spacing.xs))
+                            }
+                            Text(stringResource(R.string.action_save))
+                        }
                     }
                 }
             }
@@ -391,11 +415,16 @@ fun CaptureReviewScreen(nav: NavController) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .imePadding()
                 .verticalScroll(rememberScrollState()),
         ) {
+            // Shrinks to a compact strip while typing so the field being edited stays in view.
             Box(
-                Modifier.fillMaxWidth().height(PREVIEW_HEIGHT).clipToBounds().background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+                    .height(if (typing) PREVIEW_COMPACT_HEIGHT else PREVIEW_HEIGHT)
+                    .clipToBounds()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center,
             ) {
                 val bmp = preview
@@ -499,7 +528,10 @@ private fun LocationBlock(location: ReviewLocation, include: Boolean, imported: 
             Spacer(Modifier.width(Spacing.sm))
             Text(stringResource(R.string.gps_searching), style = MaterialTheme.typography.bodyMedium)
         }
-        ReviewLocation.None -> MetadataRow(label, stringResource(if (imported) R.string.review_location_none_import else R.string.review_location_none), muted = true)
+        ReviewLocation.None -> Column {
+            MetadataRow(label, stringResource(if (imported) R.string.review_location_none_import else R.string.review_location_none), muted = true)
+            if (!imported) TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry_location)) }
+        }
         is ReviewLocation.Failed -> Column {
             MetadataRow(label, location.reason.resolve(), muted = true)
             TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry_location)) }

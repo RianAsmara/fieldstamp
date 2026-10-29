@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,6 +32,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Cameraswitch
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.FlashAuto
 import androidx.compose.material.icons.outlined.FlashOff
 import androidx.compose.material.icons.outlined.FlashOn
@@ -38,6 +42,9 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NoPhotography
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,11 +89,16 @@ import id.asmaraputra.fieldstamp.core.designsystem.FieldStampTheme
 import id.asmaraputra.fieldstamp.core.designsystem.Spacing
 import id.asmaraputra.fieldstamp.core.location.LocationResult
 import id.asmaraputra.fieldstamp.core.model.CaptureTime
+import id.asmaraputra.fieldstamp.core.model.FieldActivity
+import id.asmaraputra.fieldstamp.core.model.Project
 import id.asmaraputra.fieldstamp.core.model.GeoPoint
 import id.asmaraputra.fieldstamp.core.model.StampTemplate
 import id.asmaraputra.fieldstamp.core.permissions.PermissionStatus
 import id.asmaraputra.fieldstamp.core.permissions.openAppSettings
 import id.asmaraputra.fieldstamp.core.permissions.rememberPermission
+import id.asmaraputra.fieldstamp.feature.common.OptionSheet
+import id.asmaraputra.fieldstamp.feature.common.PickerOption
+import id.asmaraputra.fieldstamp.feature.common.ProjectActivityFields
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -110,13 +122,52 @@ data class CameraUiState(
     val template: StampTemplate? = null,
     val templateFile: File? = null,
     val recordLocation: Boolean = true,
+    val templates: List<StampTemplate> = emptyList(),
+    /** "Project · Activity" the next photo is filed under; null when neither is set. */
+    val context: String? = null,
+    val projects: List<Project> = emptyList(),
+    val activities: List<FieldActivity> = emptyList(),
+    val projectId: Long? = null,
+    val activityId: Long? = null,
 )
 
 class CameraViewModel(private val c: AppContainer) : ViewModel() {
-    val ui: StateFlow<CameraUiState> = combine(c.settings.settings, c.templates.observeAll()) { settings, templates ->
+    val ui: StateFlow<CameraUiState> = combine(
+        c.settings.settings,
+        c.templates.observeAll(),
+        c.projects.observeProjects(),
+        c.projects.observeActivities(),
+    ) { settings, templates, projects, activities ->
         val template = templates.firstOrNull { it.id == settings.selectedTemplateId }?.takeIf { c.templates.isSourceAvailable(it) }
-        CameraUiState(template, template?.let { c.templates.sourceFile(it) }, settings.recordLocation)
+        val context = listOfNotNull(
+            projects.firstOrNull { it.id == settings.currentProjectId }?.name,
+            activities.firstOrNull { it.id == settings.currentActivityId }?.name,
+        ).joinToString(" · ").ifEmpty { null }
+        CameraUiState(
+            template, template?.let { c.templates.sourceFile(it) }, settings.recordLocation, templates, context,
+            projects, activities, settings.currentProjectId, settings.currentActivityId,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CameraUiState())
+
+    fun setTemplate(id: Long?) = viewModelScope.launch { c.settings.setSelectedTemplate(id) }
+
+    fun setProject(id: Long?) = viewModelScope.launch {
+        // Changing the project clears an activity that belongs to a different project.
+        val activity = ui.value.activities.firstOrNull { it.id == ui.value.activityId }
+        c.settings.setCaptureContext(id, activity?.takeIf { it.projectId == id }?.id)
+    }
+
+    fun setActivity(id: Long?) = viewModelScope.launch { c.settings.setCaptureContext(ui.value.projectId, id) }
+
+    fun createProject(name: String) = viewModelScope.launch {
+        val id = c.projects.createProject(name, "")
+        c.settings.setCaptureContext(id, null)
+    }
+
+    fun createActivity(name: String) = viewModelScope.launch {
+        val id = c.projects.createActivity(ui.value.projectId, name, "")
+        c.settings.setCaptureContext(ui.value.projectId, id)
+    }
 
     private val _gps = MutableStateFlow<GpsStatus>(GpsStatus.Searching)
     val gps: StateFlow<GpsStatus> = _gps.asStateFlow()
@@ -283,6 +334,7 @@ private fun CameraContent(
         onDispose { provider?.unbindAll() }
     }
 
+    var pickContext by rememberSaveable { mutableStateOf(false) }
     Box(Modifier.fillMaxSize()) {
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
 
@@ -302,11 +354,9 @@ private fun CameraContent(
             }
         }
 
-        // Top controls
-        Row(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(Spacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        // Top controls on a solid scrim (not blur) so white text stays readable over any scene.
+        Column(Modifier.fillMaxWidth().background(SCRIM).statusBarsPadding().padding(Spacing.sm)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             CameraIconButton(Icons.Outlined.Close, stringResource(R.string.action_close), onClose)
             Spacer(Modifier.weight(1f))
             GpsChip(gps, onGpsClick)
@@ -316,6 +366,8 @@ private fun CameraContent(
                 stringResource(when (flash) { FlashSetting.AUTO -> R.string.camera_flash_auto; FlashSetting.ON -> R.string.camera_flash_on; FlashSetting.OFF -> R.string.camera_flash_off }),
             ) { flash = FlashSetting.entries[(flash.ordinal + 1) % FlashSetting.entries.size] }
         }
+        ContextChip(ui.context ?: stringResource(R.string.context_no_project)) { pickContext = true }
+        }
 
         error?.let {
             Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.align(Alignment.Center).padding(Spacing.xl)) {
@@ -323,60 +375,137 @@ private fun CameraContent(
             }
         }
 
-        // Bottom controls: shutter centered, within thumb reach.
-        Row(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.45f)).navigationBarsPadding().padding(vertical = Spacing.xl, horizontal = Spacing.xl),
-            verticalAlignment = Alignment.CenterVertically,
+        // Bottom controls: template switcher above a centered shutter, within thumb reach.
+        var pickTemplate by rememberSaveable { mutableStateOf(false) }
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(SCRIM).navigationBarsPadding().padding(bottom = Spacing.xl, top = Spacing.md),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                ui.template?.name ?: stringResource(R.string.template_basic_name),
-                color = Color.White,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            val shutterLabel = stringResource(R.string.camera_shutter)
-            Box(
-                Modifier
-                    .size(76.dp)
-                    .clip(CircleShape)
-                    .background(FieldStampTheme.extended.capture)
-                    .border(4.dp, Color.White, CircleShape)
-                    .semantics { contentDescription = shutterLabel }
-                    .clickable(enabled = !capturing && error == null) {
-                        capturing = true
-                        val time = CaptureTime.now()
-                        val fix = vm.fixForCapture(time.epochMillis)
-                        val file = vm.newCaptureFile()
-                        imageCapture.takePicture(
-                            ImageCapture.OutputFileOptions.Builder(file).build(),
-                            ContextCompat.getMainExecutor(context),
-                            object : ImageCapture.OnImageSavedCallback {
-                                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                                    capturing = false
-                                    onCaptured(file, time, fix)
-                                }
+            TemplateChip(ui.template?.name ?: stringResource(R.string.template_basic_name)) { pickTemplate = true }
+            Spacer(Modifier.height(Spacing.lg))
+            Row(Modifier.fillMaxWidth().padding(horizontal = Spacing.xl), verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                val shutterLabel = stringResource(R.string.camera_shutter)
+                Box(
+                    Modifier
+                        .size(SHUTTER)
+                        .clip(CircleShape)
+                        .border(4.dp, Color.White, CircleShape)
+                        .padding(6.dp)
+                        .clip(CircleShape)
+                        .background(FieldStampTheme.extended.capture)
+                        .semantics { contentDescription = shutterLabel }
+                        .clickable(enabled = !capturing && error == null) {
+                            capturing = true
+                            val time = CaptureTime.now()
+                            val fix = vm.fixForCapture(time.epochMillis)
+                            val file = vm.newCaptureFile()
+                            imageCapture.takePicture(
+                                ImageCapture.OutputFileOptions.Builder(file).build(),
+                                ContextCompat.getMainExecutor(context),
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                        capturing = false
+                                        onCaptured(file, time, fix)
+                                    }
 
-                                override fun onError(exception: ImageCaptureException) {
-                                    capturing = false
-                                    file.delete()
-                                    error = R.string.camera_error_capture
-                                }
-                            },
-                        )
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (capturing) CircularProgressIndicator(color = FieldStampTheme.extended.onCapture, modifier = Modifier.size(28.dp))
-                else Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = FieldStampTheme.extended.onCapture, modifier = Modifier.size(30.dp))
-            }
-            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                CameraIconButton(Icons.Outlined.Cameraswitch, stringResource(R.string.camera_switch)) {
-                    lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
+                                    override fun onError(exception: ImageCaptureException) {
+                                        capturing = false
+                                        file.delete()
+                                        error = R.string.camera_error_capture
+                                    }
+                                },
+                            )
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (capturing) CircularProgressIndicator(color = FieldStampTheme.extended.onCapture, modifier = Modifier.size(28.dp))
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    CameraIconButton(Icons.Outlined.Cameraswitch, stringResource(R.string.camera_switch)) {
+                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
+                    }
                 }
             }
         }
+        if (pickTemplate) {
+            OptionSheet(
+                title = stringResource(R.string.field_template),
+                options = listOf(PickerOption(null, stringResource(R.string.template_basic_name), stringResource(R.string.template_basic_desc))) +
+                    ui.templates.map { PickerOption(it.id, it.name, "${it.widthPx} × ${it.heightPx} px") },
+                selectedId = ui.template?.id,
+                onSelect = { vm.setTemplate(it); pickTemplate = false },
+                onDismiss = { pickTemplate = false },
+            )
+        }
+        if (pickContext) ContextSheet(ui, vm) { pickContext = false }
+    }
+}
+
+/** Project/activity switcher so the next photo can be refiled without leaving the camera. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ContextSheet(ui: CameraUiState, vm: CameraViewModel, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.navigationBarsPadding().padding(bottom = Spacing.lg)) {
+            Text(
+                stringResource(R.string.camera_context_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.sm),
+            )
+            ProjectActivityFields(
+                projects = ui.projects,
+                activities = ui.activities,
+                projectId = ui.projectId,
+                activityId = ui.activityId,
+                onProjectChange = vm::setProject,
+                onActivityChange = vm::setActivity,
+                onCreateProject = vm::createProject,
+                onCreateActivity = vm::createActivity,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContextChip(label: String, onClick: () -> Unit) {
+    val description = stringResource(R.string.camera_change_context, label)
+    Row(
+        Modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = description }
+            .heightIn(min = Spacing.touch)
+            .padding(horizontal = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = Color.White, style = FieldStampTheme.mono.small, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        Spacer(Modifier.width(Spacing.xs))
+        Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+    }
+}
+
+private val SCRIM = Color.Black.copy(alpha = 0.6f)
+private val SHUTTER = 84.dp
+
+@Composable
+private fun TemplateChip(name: String, onClick: () -> Unit) {
+    val description = stringResource(R.string.camera_change_template, name)
+    Row(
+        Modifier
+            .clip(MaterialTheme.shapes.medium)
+            .border(1.dp, Color.White.copy(alpha = 0.6f), MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = description }
+            .heightIn(min = Spacing.touch)
+            .padding(horizontal = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.Layers, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(Spacing.sm))
+        Text(name, color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 220.dp))
+        Spacer(Modifier.width(Spacing.xs))
+        Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -402,14 +531,23 @@ private fun GpsChip(status: GpsStatus, onClick: () -> Unit) {
     Row(
         Modifier
             .clip(RoundedCornerShape(24.dp))
-            .background(Color.Black.copy(alpha = 0.45f))
+            .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
             .clickable(onClick = onClick)
             .heightIn(min = Spacing.touch)
             .padding(horizontal = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = if (status is GpsStatus.Fixed) FieldStampTheme.extended.capture else Color.White, modifier = Modifier.size(18.dp))
+        // Color supports the text (accuracy in metres); it never carries the meaning alone.
+        val tint = when {
+            status !is GpsStatus.Fixed -> Color.White
+            (status.point.accuracyMeters ?: Float.MAX_VALUE) <= GOOD_ACCURACY_M -> GPS_GOOD
+            else -> FieldStampTheme.extended.capture
+        }
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(Spacing.xs))
-        Text(label, color = Color.White, style = MaterialTheme.typography.labelMedium)
+        Text(label, color = Color.White, style = FieldStampTheme.mono.small)
     }
 }
+
+private const val GOOD_ACCURACY_M = 20f
+private val GPS_GOOD = Color(0xFF6FD3A0)
