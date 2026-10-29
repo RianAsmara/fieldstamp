@@ -1,5 +1,43 @@
 package id.asmaraputra.fieldstamp.feature.home
 
+import android.app.Activity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.core.view.WindowCompat
+import id.asmaraputra.fieldstamp.core.designsystem.FsCard
+import id.asmaraputra.fieldstamp.core.designsystem.Motion
+import id.asmaraputra.fieldstamp.core.designsystem.PlexMono
+import id.asmaraputra.fieldstamp.core.designsystem.pressScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +51,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -23,8 +60,6 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
@@ -161,179 +196,294 @@ fun HomeScreen(nav: NavController) {
     val import = rememberPhotoImport(nav) {
         scope.launch { snackbar.showSnackbar(resources.getString(R.string.import_failed)) }
     }
+    LightStatusBarIcons()
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         // The capture dock stays fixed above the navigation bar: the camera is always one tap away.
         bottomBar = { CaptureDock(onCapture = { nav.navigate(CameraRoute) }, onImport = import) },
-        contentWindowInsets = WindowInsets.statusBars,
+        // The band draws behind the status bar and pads itself.
+        contentWindowInsets = WindowInsets(0),
     ) { padding ->
         if (!state.loaded) {
-            LoadingState(Modifier.padding(padding))
+            LoadingState(Modifier.padding(padding).statusBarsPadding())
             return@Scaffold
         }
+        Box(Modifier.fillMaxSize().padding(padding)) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Masthead(state.today)
+            Band(state.today, state.todayPhotos.size)
 
-            ProjectActivityFields(
-                projects = state.projects,
-                activities = state.activities,
-                projectId = state.projectId,
-                activityId = state.activityId,
-                onProjectChange = vm::setProject,
-                onActivityChange = vm::setActivity,
-                onCreateProject = vm::createProject,
-                onCreateActivity = vm::createActivity,
-            )
-            FsDivider(inset = true)
-            TemplatePickerField(templates = state.templates, selectedId = state.selectedTemplateId, onSelect = vm::setTemplate)
-            FsDivider(inset = true)
-
-            Spacer(Modifier.height(Spacing.md))
-            if (state.todayPhotos.isEmpty()) {
-                SectionHeader(stringResource(R.string.home_today))
-                Column(Modifier.padding(horizontal = Spacing.gutter)) {
-                    Text(
-                        stringResource(R.string.home_today_empty_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.semantics { heading() },
-                    )
-                    Spacer(Modifier.height(Spacing.xs))
-                    Text(
-                        stringResource(R.string.home_today_empty_body),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.height(Spacing.md))
-            } else {
-                SectionHeader(
-                    text = stringResource(R.string.home_today) + " · " + pluralStringResource(R.plurals.photo_count, state.todayPhotos.size, state.todayPhotos.size),
-                    trailing = { TextButton(onClick = { nav.navigate(PhotosRoute) }) { Text(stringResource(R.string.action_see_all)) } },
+            // The context card overlaps the band's lower edge: what the next photo is filed under.
+            FsCard(Modifier.padding(horizontal = Spacing.gutter).overlapAbove(BAND_OVERLAP)) {
+                ProjectActivityFields(
+                    projects = state.projects,
+                    activities = state.activities,
+                    projectId = state.projectId,
+                    activityId = state.activityId,
+                    onProjectChange = vm::setProject,
+                    onActivityChange = vm::setActivity,
+                    onCreateProject = vm::createProject,
+                    onCreateActivity = vm::createActivity,
                 )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Spacing.gutter),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                ) {
-                    items(state.todayPhotos, key = { it.photo.id }) { item ->
-                        // Time sits under the thumbnail so it never covers the stamp printed on the photo.
-                        Column(Modifier.width(THUMB_WIDTH)) {
-                            PhotoThumbnail(
-                                file = appFile(item.photo.thumbnailPath),
-                                contentDescription = item.photo.caption.ifBlank { stringResource(R.string.photo_no_caption) },
-                                modifier = Modifier
-                                    .size(THUMB_WIDTH, THUMB_HEIGHT)
-                                    .clickable { nav.navigate(PhotoDetailRoute(item.photo.id)) },
-                            )
-                            Text(
-                                Formats.time(item.photo.captureTime.zoned),
-                                style = FieldStampTheme.mono.small,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = Spacing.xs),
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(Spacing.md))
+                FsDivider(inset = true)
+                TemplatePickerField(templates = state.templates, selectedId = state.selectedTemplateId, onSelect = vm::setTemplate)
+            }
+
+            Spacer(Modifier.height(Spacing.lg))
+            SectionHeader(
+                text = stringResource(R.string.home_today),
+                trailing = if (state.todayPhotos.isEmpty()) null else {
+                    { TextButton(onClick = { nav.navigate(PhotosRoute) }) { Text(stringResource(R.string.action_see_all)) } }
+                },
+            )
+            if (state.todayPhotos.isEmpty()) {
+                EmptyToday(Modifier.padding(horizontal = Spacing.gutter))
+            } else {
+                TodayStrip(state.todayPhotos, onOpen = { nav.navigate(PhotoDetailRoute(it)) })
             }
 
             state.latestReport?.let { latest ->
-                FsDivider(inset = true)
-                ListRow(
-                    title = latest.report.title,
-                    supporting = statusLabel(latest.report) + " · " + pluralStringResource(R.plurals.photo_count, latest.photoCount, latest.photoCount),
-                    titleMaxLines = 2,
-                    leading = { StatusIcon(latest.report) },
-                    trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
-                    onClick = { nav.navigate(ReportBuilderRoute(latest.report.id)) },
-                )
+                Spacer(Modifier.height(Spacing.lg))
+                SectionHeader(stringResource(R.string.home_latest_report))
+                FsCard(Modifier.padding(horizontal = Spacing.gutter)) {
+                    ListRow(
+                        title = latest.report.title,
+                        supporting = statusLabel(latest.report) + " · " + pluralStringResource(R.plurals.photo_count, latest.photoCount, latest.photoCount),
+                        titleMaxLines = 2,
+                        leading = { StatusIcon(latest.report) },
+                        trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
+                        onClick = { nav.navigate(ReportBuilderRoute(latest.report.id)) },
+                    )
+                }
             }
 
-            Spacer(Modifier.height(Spacing.sm))
+            Spacer(Modifier.height(Spacing.lg))
             SectionHeader(stringResource(R.string.home_manage))
-            ListRow(
-                title = stringResource(R.string.projects_title),
-                supporting = if (state.projects.isEmpty()) stringResource(R.string.home_projects_empty)
-                else pluralStringResource(R.plurals.project_count, state.projects.size, state.projects.size),
-                leading = { Icon(Icons.Outlined.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
-                onClick = { nav.navigate(ProjectsRoute) },
-            )
-            FsDivider(inset = true)
-            ListRow(
-                title = stringResource(R.string.templates_title),
-                supporting = if (state.templates.isEmpty()) stringResource(R.string.home_templates_empty)
-                else pluralStringResource(R.plurals.template_count, state.templates.size, state.templates.size),
-                leading = { Icon(Icons.Outlined.Layers, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
-                onClick = { nav.navigate(TemplatesRoute) },
-            )
-            FsDivider(inset = true)
-            ListRow(
-                title = stringResource(R.string.report_create),
-                supporting = stringResource(R.string.home_report_hint),
-                leading = { Icon(Icons.Outlined.PostAdd, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
-                onClick = { nav.navigate(ReportCreateRoute) },
-            )
+            FsCard(Modifier.padding(horizontal = Spacing.gutter)) {
+                ListRow(
+                    title = stringResource(R.string.projects_title),
+                    supporting = if (state.projects.isEmpty()) stringResource(R.string.home_projects_empty)
+                    else pluralStringResource(R.plurals.project_count, state.projects.size, state.projects.size),
+                    leading = { RowIcon(Icons.Outlined.Folder) },
+                    trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
+                    onClick = { nav.navigate(ProjectsRoute) },
+                )
+                FsDivider(inset = true)
+                ListRow(
+                    title = stringResource(R.string.templates_title),
+                    supporting = if (state.templates.isEmpty()) stringResource(R.string.home_templates_empty)
+                    else pluralStringResource(R.plurals.template_count, state.templates.size, state.templates.size),
+                    leading = { RowIcon(Icons.Outlined.Layers) },
+                    trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
+                    onClick = { nav.navigate(TemplatesRoute) },
+                )
+                FsDivider(inset = true)
+                ListRow(
+                    title = stringResource(R.string.report_create),
+                    supporting = stringResource(R.string.home_report_hint),
+                    leading = { RowIcon(Icons.Outlined.PostAdd) },
+                    trailing = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
+                    onClick = { nav.navigate(ReportCreateRoute) },
+                )
+            }
             Spacer(Modifier.height(Spacing.xl))
+        }
+        // Scrolled content never shows through the status bar: it keeps the band color.
+        Spacer(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(FieldStampTheme.extended.band))
         }
     }
 }
 
-private val THUMB_WIDTH = 120.dp
-private val THUMB_HEIGHT = 160.dp
+private val BAND_OVERLAP = 40.dp
+private val HERO_SIZE = DpSize(200.dp, 266.dp)
+private val THUMB_SIZE = DpSize(132.dp, 176.dp)
 
-/** Weekday and time zone in mono caps, the date as the headline, then a heavy rule. Nothing decorative. */
+/** The band is dark teal in both themes, so status bar icons stay light while Home is shown. */
 @Composable
-private fun Masthead(today: LocalDate) {
+private fun LightStatusBarIcons() {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    DisposableEffect(view) {
+        val controller = WindowCompat.getInsetsController((view.context as Activity).window, view)
+        val previous = controller.isAppearanceLightStatusBars
+        controller.isAppearanceLightStatusBars = false
+        onDispose { controller.isAppearanceLightStatusBars = previous }
+    }
+}
+
+/** Places the element [amount] higher and gives that space back, so it overlaps whatever is above it. */
+private fun Modifier.overlapAbove(amount: Dp) = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val shift = amount.roundToPx()
+    layout(placeable.width, placeable.height - shift) { placeable.place(0, -shift) }
+}
+
+/** Identity band: weekday and zone, the date as the headline, and today's photo count. */
+@Composable
+private fun Band(today: LocalDate, todayCount: Int) {
+    val ext = FieldStampTheme.extended
     val zone = Formats.zoneLabel(ZonedDateTime.now())
     val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, Formats.locale).uppercase(Formats.locale)
-    Column(Modifier.padding(horizontal = Spacing.gutter).padding(top = Spacing.xl)) {
-        Text(
-            "$weekday · $zone",
-            style = FieldStampTheme.mono.label,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+            .background(ext.band)
+            .statusBarsPadding()
+            .padding(horizontal = Spacing.gutter)
+            .padding(top = Spacing.xl, bottom = Spacing.xl + BAND_OVERLAP),
+    ) {
+        Text("$weekday · $zone", style = FieldStampTheme.mono.label, color = ext.onBandMuted)
         Spacer(Modifier.height(Spacing.xs))
-        Text(
-            Formats.longDate(today),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        Spacer(Modifier.height(Spacing.md))
-        HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.onSurface)
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                Formats.longDate(today),
+                style = MaterialTheme.typography.headlineMedium,
+                color = ext.onBand,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            Spacer(Modifier.width(Spacing.md))
+            TodayCounter(todayCount)
+        }
+    }
+}
+
+/** Big count with a rolling digit change, so a new photo visibly lands here after saving. */
+@Composable
+private fun TodayCounter(count: Int) {
+    val ext = FieldStampTheme.extended
+    val label = pluralStringResource(R.plurals.photo_count_today, count, count)
+    Column(horizontalAlignment = Alignment.End, modifier = Modifier.clearAndSetSemantics { contentDescription = label }) {
+        AnimatedContent(
+            targetState = count,
+            transitionSpec = {
+                val up = targetState > initialState
+                (slideInVertically(tween(Motion.MEDIUM, easing = Motion.enter)) { if (up) it else -it } + fadeIn(tween(Motion.SHORT)))
+                    .togetherWith(slideOutVertically(tween(Motion.SHORT, easing = Motion.exit)) { if (up) -it else it } + fadeOut(tween(Motion.INSTANT)))
+                    .using(SizeTransform(clip = true))
+            },
+            label = "todayCount",
+        ) { value ->
+            Text(value.toString(), style = MaterialTheme.typography.displaySmall.copy(fontFamily = PlexMono), color = ext.onBand)
+        }
+        Text(stringResource(R.string.home_today_count_label), style = MaterialTheme.typography.labelMedium, color = ext.onBandMuted)
+    }
+}
+
+/** Latest photo large, earlier ones smaller; new photos scale in and the row makes room. */
+@Composable
+private fun TodayStrip(photos: List<PhotoListItem>, onOpen: (Long) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = Spacing.gutter),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        itemsIndexed(photos, key = { _, item -> item.photo.id }) { index, item ->
+            val size = if (index == 0) HERO_SIZE else THUMB_SIZE
+            val interaction = remember { MutableInteractionSource() }
+            // Time sits under the thumbnail so it never covers the stamp printed on the photo.
+            Column(
+                Modifier
+                    .animateItem(fadeInSpec = tween(Motion.MEDIUM), placementSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                    .width(size.width),
+            ) {
+                PhotoThumbnail(
+                    file = appFile(item.photo.thumbnailPath),
+                    contentDescription = item.photo.caption.ifBlank { stringResource(R.string.photo_no_caption) },
+                    modifier = Modifier
+                        .size(size)
+                        .pressScale(interaction)
+                        .clickable(interactionSource = interaction, indication = LocalIndication.current) { onOpen(item.photo.id) },
+                )
+                Text(
+                    Formats.time(item.photo.captureTime.zoned),
+                    style = FieldStampTheme.mono.small,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xs),
+                )
+            }
+        }
+    }
+}
+
+/** Empty today: a viewfinder with a stamp bar, the same picture as the app icon, plus one sentence. */
+@Composable
+private fun EmptyToday(modifier: Modifier = Modifier) {
+    FsCard(modifier) {
+        Row(Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+            val ink = MaterialTheme.colorScheme.primary
+            Canvas(Modifier.size(72.dp).clearAndSetSemantics {}) {
+                val stroke = 3.dp.toPx()
+                val arm = size.minDimension * 0.28f
+                val inset = stroke / 2
+                val (w, h) = size.width - inset to size.height - inset
+                val corners = listOf(
+                    Offset(inset, inset) to listOf(Offset(inset + arm, inset), Offset(inset, inset + arm)),
+                    Offset(w, inset) to listOf(Offset(w - arm, inset), Offset(w, inset + arm)),
+                    Offset(inset, h) to listOf(Offset(inset + arm, h), Offset(inset, h - arm)),
+                    Offset(w, h) to listOf(Offset(w - arm, h), Offset(w, h - arm)),
+                )
+                corners.forEach { (corner, ends) -> ends.forEach { drawLine(ink, corner, it, stroke) } }
+                val barH = size.height * 0.16f
+                drawRoundRect(
+                    color = ink.copy(alpha = 0.35f),
+                    topLeft = Offset(size.width * 0.2f, size.height * 0.62f),
+                    size = Size(size.width * 0.6f, barH),
+                    cornerRadius = CornerRadius(barH / 3),
+                )
+            }
+            Spacer(Modifier.width(Spacing.lg))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.home_today_empty_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.semantics { heading() },
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                Text(
+                    stringResource(R.string.home_today_empty_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/** Leading icon on a tinted tile, so grouped rows scan by shape before text. */
+@Composable
+private fun RowIcon(icon: ImageVector) {
+    Box(
+        Modifier.size(40.dp).clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(22.dp))
     }
 }
 
 @Composable
 private fun CaptureDock(onCapture: () -> Unit, onImport: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        Column {
-            FsDivider()
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter, vertical = Spacing.md),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter, vertical = Spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedIconButton(
+                onClick = onImport,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.size(Spacing.capture),
             ) {
-                OutlinedIconButton(
-                    onClick = onImport,
-                    shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.size(Spacing.capture),
-                ) {
-                    Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = stringResource(R.string.action_import_photo))
-                }
-                CaptureButton(
-                    label = stringResource(R.string.action_take_photo),
-                    onClick = onCapture,
-                    modifier = Modifier.weight(1f),
-                )
+                Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = stringResource(R.string.action_import_photo))
             }
+            CaptureButton(
+                label = stringResource(R.string.action_take_photo),
+                onClick = onCapture,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

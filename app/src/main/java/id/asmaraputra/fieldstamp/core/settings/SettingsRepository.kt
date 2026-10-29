@@ -25,7 +25,7 @@ data class AppSettings(
     val autoPlaceName: Boolean = true,
     /** Open the camera straight away when the app is launched from the launcher. */
     val openCameraOnLaunch: Boolean = true,
-    /** False until the app has been opened once; the very first launch shows Home instead of the camera. */
+    /** False until onboarding is finished; until then launches open onboarding instead of Home or the camera. */
     val launchedBefore: Boolean = false,
     val currentProjectId: Long? = null,
     val currentActivityId: Long? = null,
@@ -100,7 +100,7 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setOpenCameraOnLaunch(value: Boolean) = edit { it[Keys.openCamera] = value }
 
-    suspend fun markLaunched() = edit { it[Keys.launchedBefore] = true }
+    suspend fun setLaunchedBefore(value: Boolean) = edit { it[Keys.launchedBefore] = value }
 
     suspend fun setCaptureContext(projectId: Long?, activityId: Long?) = edit {
         if (projectId == null) it.remove(Keys.currentProject) else it[Keys.currentProject] = projectId

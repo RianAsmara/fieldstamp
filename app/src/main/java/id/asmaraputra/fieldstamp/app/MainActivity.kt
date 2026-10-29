@@ -28,7 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -40,12 +42,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.toRoute
 import id.asmaraputra.fieldstamp.R
 import id.asmaraputra.fieldstamp.core.designsystem.FieldStampTheme
 import id.asmaraputra.fieldstamp.feature.camera.CameraScreen
 import id.asmaraputra.fieldstamp.feature.camera.CaptureReviewScreen
 import id.asmaraputra.fieldstamp.feature.home.HomeScreen
+import id.asmaraputra.fieldstamp.feature.onboarding.OnboardingScreen
 import id.asmaraputra.fieldstamp.feature.paywall.PaywallScreen
 import id.asmaraputra.fieldstamp.feature.photos.PhotoDetailScreen
 import id.asmaraputra.fieldstamp.feature.photos.PhotosScreen
@@ -58,26 +63,43 @@ import id.asmaraputra.fieldstamp.feature.settings.PrivacyScreen
 import id.asmaraputra.fieldstamp.feature.settings.SettingsScreen
 import id.asmaraputra.fieldstamp.feature.templates.TemplateEditorScreen
 import id.asmaraputra.fieldstamp.feature.templates.TemplatesScreen
+import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val startOnHome = intent.getBooleanExtra(EXTRA_START_ON_HOME, false)
         // Only a fresh launch opens the camera; recreation (rotation, process restore) keeps the back stack.
-        val openCamera = savedInstanceState == null && !intent.getBooleanExtra(EXTRA_SKIP_CAMERA, false)
+        val freshLaunch = savedInstanceState == null
+        var start by mutableStateOf<AppStart?>(null)
+        // The splash stays up until settings decide the first screen, so Home never flashes before it.
+        splash.setKeepOnScreenCondition { start == null }
+        lifecycleScope.launch {
+            val settings = container.settings.current()
+            start = when {
+                startOnHome -> AppStart.HOME
+                !settings.launchedBefore -> AppStart.ONBOARDING
+                freshLaunch && settings.openCameraOnLaunch -> AppStart.CAMERA
+                else -> AppStart.HOME
+            }
+        }
         setContent {
             FieldStampTheme {
-                FieldStampApp(openCameraOnStart = openCamera)
+                start?.let { FieldStampApp(it) }
             }
         }
     }
 
     companion object {
-        /** Lets instrumentation tests start on Home without the camera and its permission dialog. */
-        const val EXTRA_SKIP_CAMERA = "skip_camera"
+        /** Lets instrumentation tests start on Home, past onboarding and without the camera's permission dialog. */
+        const val EXTRA_START_ON_HOME = "start_on_home"
     }
 }
+
+enum class AppStart { ONBOARDING, HOME, CAMERA }
 
 private data class TopLevel(val route: Any, val type: KClass<*>, val label: Int, val icon: ImageVector, val selectedIcon: ImageVector)
 
@@ -89,15 +111,18 @@ private val topLevel = listOf(
 )
 
 @Composable
-fun FieldStampApp(nav: NavHostController = rememberNavController(), openCameraOnStart: Boolean = false) {
-    val context = LocalContext.current
+fun FieldStampApp(start: AppStart) {
+    // Onboarding sits outside the nav graph so Home stays the graph's start destination for tab navigation.
+    var onboarding by rememberSaveable { mutableStateOf(start == AppStart.ONBOARDING) }
+    if (onboarding) OnboardingScreen(onDone = { onboarding = false })
+    else AppNavigation(openCamera = start == AppStart.CAMERA)
+}
+
+@Composable
+private fun AppNavigation(openCamera: Boolean, nav: NavHostController = rememberNavController()) {
     LaunchedEffect(Unit) {
-        if (!openCameraOnStart) return@LaunchedEffect
-        val settings = context.container.settings.current()
-        // The first launch introduces Home; later launches go straight to the camera, on top of Home
-        // so closing it lands there.
-        if (!settings.launchedBefore) context.container.settings.markLaunched()
-        else if (settings.openCameraOnLaunch) nav.navigate(CameraRoute)
+        // Camera goes on top of Home, so closing it lands on Home.
+        if (openCamera) nav.navigate(CameraRoute)
     }
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination

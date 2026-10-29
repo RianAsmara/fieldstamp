@@ -1,5 +1,15 @@
 package id.asmaraputra.fieldstamp.core.designsystem
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -282,6 +292,30 @@ fun ProBadge(modifier: Modifier = Modifier) {
     }
 }
 
+/** Groups related rows or content one tonal step above the background. Never nest cards. */
+@Composable
+fun FsCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        color = FieldStampTheme.extended.card,
+        shape = MaterialTheme.shapes.large,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(content = content)
+    }
+}
+
+/** Shrinks the element while pressed and springs back on release, so taps feel physical. */
+@Composable
+fun Modifier.pressScale(interaction: InteractionSource, pressedScale: Float = 0.96f): Modifier {
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) pressedScale else 1f, Motion.press(), label = "pressScale")
+    // Read in the layer block so the animation only redraws, never recomposes.
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
 @Composable
 fun FsDivider(modifier: Modifier = Modifier, inset: Boolean = false) {
     HorizontalDivider(modifier.padding(start = if (inset) Spacing.gutter else 0.dp), color = MaterialTheme.colorScheme.outlineVariant)
@@ -312,7 +346,7 @@ fun ConfirmDialog(
 /** Thumbnail from an app-owned file. Shows an explicit "file missing" tile instead of a blank. */
 @Composable
 fun PhotoThumbnail(file: File?, contentDescription: String?, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Crop) {
-    val shape = MaterialTheme.shapes.extraSmall
+    val shape = MaterialTheme.shapes.small
     Box(modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
         if (file == null || !file.isFile) {
             MissingImage(Modifier.fillMaxSize())
@@ -367,12 +401,18 @@ fun FsExtendedFab(label: String, icon: ImageVector, onClick: () -> Unit, trailin
 @Composable
 fun CaptureButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val ext = FieldStampTheme.extended
+    val haptics = LocalHapticFeedback.current
+    val interaction = remember { MutableInteractionSource() }
     Button(
-        onClick = onClick,
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+            onClick()
+        },
         colors = ButtonDefaults.buttonColors(containerColor = ext.capture, contentColor = ext.onCapture),
         border = BorderStroke(2.dp, ext.captureEdge),
         shape = MaterialTheme.shapes.medium,
-        modifier = modifier.heightIn(min = Spacing.capture),
+        interactionSource = interaction,
+        modifier = modifier.pressScale(interaction).heightIn(min = Spacing.capture),
     ) {
         Icon(Icons.Outlined.PhotoCamera, contentDescription = null)
         Spacer(Modifier.width(Spacing.sm))

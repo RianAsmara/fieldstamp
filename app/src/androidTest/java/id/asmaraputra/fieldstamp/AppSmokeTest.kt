@@ -28,7 +28,7 @@ class AppSmokeTest {
     // Starts on Home: the camera would otherwise open on top and raise its permission dialog.
     @Before fun launch() {
         val intent = Intent(ApplicationProvider.getApplicationContext(), MainActivity::class.java)
-            .putExtra(MainActivity.EXTRA_SKIP_CAMERA, true)
+            .putExtra(MainActivity.EXTRA_START_ON_HOME, true)
         scenario = ActivityScenario.launch(intent)
     }
 

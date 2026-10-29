@@ -1,5 +1,9 @@
 package id.asmaraputra.fieldstamp.core.designsystem
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -25,10 +29,11 @@ import id.asmaraputra.fieldstamp.R
 /*
  * FieldStamp design tokens.
  *
- * Principles: utilitarian and legible outdoors. One working color (survey-ink teal) for primary actions,
- * a high-visibility amber reserved for the capture action only, warm paper neutrals, small radii,
- * lists over cards, monospace for machine-like values (time, coordinates). Dynamic color is off so
- * contrast is predictable in sunlight and screenshots match the printed report.
+ * Principles: legible outdoors, photo-first. Survey-ink teal is the identity color (Home band, active
+ * states), a high-visibility amber is reserved for the capture action only. Depth comes from tonal layers
+ * (background -> card -> raised), not heavy shadows; related content is grouped in cards, never nested.
+ * Monospace for machine-like values (time, coordinates). Dynamic color is off so contrast is predictable
+ * in sunlight and screenshots match the printed report.
  */
 
 private object Palette {
@@ -139,11 +144,31 @@ private val AppTypography = Typography(
 
 private val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(6.dp),
-    medium = RoundedCornerShape(8.dp),
-    large = RoundedCornerShape(12.dp),
-    extraLarge = RoundedCornerShape(16.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
+
+/**
+ * Motion tokens. Motion confirms an action or shows cause and effect; it is never decoration.
+ * Compose scales every duration by the system animator scale, so "Remove animations" turns these into
+ * instant changes without extra handling.
+ */
+object Motion {
+    const val INSTANT = 100
+    const val SHORT = 200
+    const val MEDIUM = 300
+    const val LONG = 450
+    /** Material 3 emphasized decelerate: things arriving. */
+    val enter = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+    /** Material 3 emphasized accelerate: things leaving. */
+    val exit = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+    /** Material 3 standard: changes in place. */
+    val standard = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    /** Press and release: slightly bouncy so the control feels physical. */
+    fun <T> press(): SpringSpec<T> = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)
+}
 
 /** 4-dp spacing scale. */
 @Immutable
@@ -175,6 +200,12 @@ data class ExtendedColors(
     val warning: Color,
     val onWarningContainer: Color,
     val warningContainer: Color,
+    /** Grouped content (cards) one tonal step above the background. */
+    val card: Color,
+    /** Identity band at the top of Home. */
+    val band: Color,
+    val onBand: Color,
+    val onBandMuted: Color,
 )
 
 private val LightExtended = ExtendedColors(
@@ -185,6 +216,10 @@ private val LightExtended = ExtendedColors(
     warning = Color(0xFF8A5A00),
     warningContainer = Color(0xFFFFF0D1),
     onWarningContainer = Color(0xFF3D2A00),
+    card = Color.White,
+    band = Palette.ink,
+    onBand = Color.White,
+    onBandMuted = Color(0xFFB5D6DE),
 )
 
 private val DarkExtended = ExtendedColors(
@@ -195,6 +230,10 @@ private val DarkExtended = ExtendedColors(
     warning = Color(0xFFFFC24D),
     warningContainer = Color(0xFF3D2C06),
     onWarningContainer = Color(0xFFFFDEA6),
+    card = Color(0xFF1C2023),
+    band = Color(0xFF0B4552),
+    onBand = Color(0xFFE8F4F7),
+    onBandMuted = Color(0xFF9CC4CE),
 )
 
 @Immutable

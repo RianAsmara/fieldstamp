@@ -1,5 +1,38 @@
 package id.asmaraputra.fieldstamp.feature.camera
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.TextStyle
+import id.asmaraputra.fieldstamp.app.PhotoDetailRoute
+import id.asmaraputra.fieldstamp.core.designsystem.Motion
+import id.asmaraputra.fieldstamp.core.designsystem.PhotoThumbnail
+import id.asmaraputra.fieldstamp.core.designsystem.pressScale
+import id.asmaraputra.fieldstamp.core.model.PhotoListItem
+import id.asmaraputra.fieldstamp.feature.common.appFile
+import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import android.Manifest
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
@@ -149,6 +182,10 @@ class CameraViewModel(private val c: AppContainer) : ViewModel() {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CameraUiState())
 
+    /** Most recent photo of today, shown in the corner like a camera's last-shot preview. */
+    val latest: StateFlow<PhotoListItem?> = c.photos.observeDay(LocalDate.now()).map { it.firstOrNull() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun setTemplate(id: Long?) = viewModelScope.launch { c.settings.setSelectedTemplate(id) }
 
     fun setProject(id: Long?) = viewModelScope.launch {
@@ -221,15 +258,14 @@ fun CameraScreen(nav: NavController) {
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        if (saved && camera.status == PermissionStatus.GRANTED) {
-            Surface(
-                color = MaterialTheme.colorScheme.inverseSurface,
-                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.align(Alignment.Center).zIndex(1f),
-            ) {
-                Text(stringResource(R.string.camera_saved), modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md))
-            }
+        // Drops in under the top controls, then leaves the way it came.
+        AnimatedVisibility(
+            visible = saved && camera.status == PermissionStatus.GRANTED,
+            enter = slideInVertically(tween(Motion.MEDIUM, easing = Motion.enter)) { -it } + fadeIn(tween(Motion.SHORT)),
+            exit = slideOutVertically(tween(Motion.SHORT, easing = Motion.exit)) { -it } + fadeOut(tween(Motion.SHORT)),
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = TOAST_TOP).zIndex(1f),
+        ) {
+            SavedToast()
         }
         when (camera.status) {
             PermissionStatus.GRANTED -> CameraContent(
@@ -237,6 +273,7 @@ fun CameraScreen(nav: NavController) {
                 gps = gps,
                 vm = vm,
                 onClose = { nav.popBackStack() },
+                onOpenPhoto = { nav.navigate(PhotoDetailRoute(it)) },
                 onGpsClick = {
                     when {
                         !ui.recordLocation -> vm.setRecordLocation(true)
@@ -295,6 +332,7 @@ private fun CameraContent(
     gps: GpsStatus,
     vm: CameraViewModel,
     onClose: () -> Unit,
+    onOpenPhoto: (Long) -> Unit,
     onGpsClick: () -> Unit,
     onCaptured: (File, CaptureTime, GeoPoint?) -> Unit,
 ) {
@@ -303,6 +341,9 @@ private fun CameraContent(
     var lensFacing by rememberSaveable { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
     var flash by rememberSaveable { mutableStateOf(FlashSetting.AUTO) }
     var capturing by remember { mutableStateOf(false) }
+    var shots by remember { mutableIntStateOf(0) }
+    val haptics = LocalHapticFeedback.current
+    val latest by vm.latest.collectAsStateWithLifecycle()
     var error by remember { mutableStateOf<Int?>(null) }
     val previewView = remember {
         PreviewView(context).apply {
@@ -354,6 +395,15 @@ private fun CameraContent(
             }
         }
 
+        // Shutter flash: a brief white veil over the preview, the classic "photo taken" cue.
+        val shutterFlash = remember { Animatable(0f) }
+        LaunchedEffect(shots) {
+            if (shots == 0) return@LaunchedEffect
+            shutterFlash.snapTo(0.7f)
+            shutterFlash.animateTo(0f, tween(Motion.SHORT, easing = Motion.exit))
+        }
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = shutterFlash.value }.background(Color.White))
+
         // Top controls on a solid scrim (not blur) so white text stays readable over any scene.
         Column(Modifier.fillMaxWidth().background(SCRIM).statusBarsPadding().padding(Spacing.sm)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -384,19 +434,25 @@ private fun CameraContent(
             TemplateChip(ui.template?.name ?: stringResource(R.string.template_basic_name)) { pickTemplate = true }
             Spacer(Modifier.height(Spacing.lg))
             Row(Modifier.fillMaxWidth().padding(horizontal = Spacing.xl), verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.weight(1f))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    LatestShot(latest, onOpenPhoto)
+                }
                 val shutterLabel = stringResource(R.string.camera_shutter)
+                val shutterInteraction = remember { MutableInteractionSource() }
                 Box(
                     Modifier
                         .size(SHUTTER)
+                        .pressScale(shutterInteraction, pressedScale = 0.92f)
                         .clip(CircleShape)
                         .border(4.dp, Color.White, CircleShape)
                         .padding(6.dp)
                         .clip(CircleShape)
                         .background(FieldStampTheme.extended.capture)
                         .semantics { contentDescription = shutterLabel }
-                        .clickable(enabled = !capturing && error == null) {
+                        .clickable(interactionSource = shutterInteraction, indication = LocalIndication.current, enabled = !capturing && error == null) {
+                            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                             capturing = true
+                            shots++
                             val time = CaptureTime.now()
                             val fix = vm.fixForCapture(time.epochMillis)
                             val file = vm.newCaptureFile()
@@ -479,7 +535,7 @@ private fun ContextChip(label: String, onClick: () -> Unit) {
             .padding(horizontal = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = Color.White, style = FieldStampTheme.mono.small, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        SwapText(label, FieldStampTheme.mono.small, Modifier.weight(1f, fill = false))
         Spacer(Modifier.width(Spacing.xs))
         Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
     }
@@ -503,7 +559,7 @@ private fun TemplateChip(name: String, onClick: () -> Unit) {
     ) {
         Icon(Icons.Outlined.Layers, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(Spacing.sm))
-        Text(name, color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 220.dp))
+        SwapText(name, MaterialTheme.typography.bodyMedium, Modifier.widthIn(max = 220.dp))
         Spacer(Modifier.width(Spacing.xs))
         Icon(Icons.Outlined.ExpandMore, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
     }
@@ -538,16 +594,81 @@ private fun GpsChip(status: GpsStatus, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Color supports the text (accuracy in metres); it never carries the meaning alone.
-        val tint = when {
+        val target = when {
             status !is GpsStatus.Fixed -> Color.White
             (status.point.accuracyMeters ?: Float.MAX_VALUE) <= GOOD_ACCURACY_M -> GPS_GOOD
             else -> FieldStampTheme.extended.capture
         }
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        val tint by animateColorAsState(target, tween(Motion.MEDIUM), label = "gpsTint")
+        // While searching the pin pulses, so a waiting state never looks frozen.
+        val pulse = if (status == GpsStatus.Searching) {
+            val t = rememberInfiniteTransition(label = "gpsPulse")
+            t.animateFloat(1f, 0.3f, infiniteRepeatable(tween(700, easing = Motion.standard), RepeatMode.Reverse), label = "gpsPulseAlpha")
+        } else null
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp).graphicsLayer { alpha = pulse?.value ?: 1f })
         Spacer(Modifier.width(Spacing.xs))
-        Text(label, color = Color.White, style = FieldStampTheme.mono.small)
+        SwapText(label, FieldStampTheme.mono.small, Modifier.animateContentSize(tween(Motion.SHORT)))
     }
 }
 
 private const val GOOD_ACCURACY_M = 20f
 private val GPS_GOOD = Color(0xFF6FD3A0)
+
+private val TOAST_TOP = 112.dp
+private val LATEST_SIZE = 52.dp
+
+/** White chip text that slides to its new value, so a changed project or GPS state is noticed. */
+@Composable
+private fun SwapText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
+    AnimatedContent(
+        targetState = text,
+        transitionSpec = {
+            (slideInVertically(tween(Motion.SHORT, easing = Motion.enter)) { it / 2 } + fadeIn(tween(Motion.SHORT)))
+                .togetherWith(slideOutVertically(tween(Motion.INSTANT, easing = Motion.exit)) { -it / 2 } + fadeOut(tween(Motion.INSTANT)))
+                .using(SizeTransform(clip = false))
+        },
+        label = "chipText",
+        modifier = modifier,
+    ) { value ->
+        Text(value, color = Color.White, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** Last saved photo; a new one pops in, so each saved shot visibly lands somewhere. */
+@Composable
+private fun LatestShot(latest: PhotoListItem?, onOpen: (Long) -> Unit) {
+    AnimatedContent(
+        targetState = latest,
+        contentKey = { it?.photo?.id },
+        transitionSpec = {
+            (scaleIn(Motion.press(), initialScale = 0.6f) + fadeIn(tween(Motion.SHORT)))
+                .togetherWith(fadeOut(tween(Motion.SHORT)))
+        },
+        label = "latestShot",
+    ) { item ->
+        if (item == null) {
+            Spacer(Modifier.size(LATEST_SIZE))
+        } else {
+            val description = stringResource(R.string.camera_open_latest)
+            PhotoThumbnail(
+                file = appFile(item.photo.thumbnailPath),
+                contentDescription = description,
+                modifier = Modifier
+                    .size(LATEST_SIZE)
+                    .border(2.dp, Color.White, MaterialTheme.shapes.small)
+                    .clickable { onOpen(item.photo.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SavedToast() {
+    Surface(color = Color.White, contentColor = Color(0xFF1A1F24), shape = CircleShape, shadowElevation = 6.dp) {
+        Row(Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Color(0xFF1E6B3A), modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(Spacing.sm))
+            Text(stringResource(R.string.camera_saved), style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}

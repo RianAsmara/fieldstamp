@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash icon with its teal disc baked in: some launchers (HyperOS) ignore
+     windowSplashScreenIconBackgroundColor, leaving the white glyph invisible on the light theme.
+     The disc fills the splash's visible circle (72 of 108 units); the glyph matches ic_launcher_foreground. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="@color/fs_brand" android:pathData="M54,54 m-36,0 a36,36 0 1 0 72,0 a36,36 0 1 0 -72,0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4" android:strokeLineCap="square"
+        android:pathData="M34,44 V34 H44 M64,34 H74 V44 M74,64 V74 H64 M44,74 H34 V64" />
+    <path android:fillColor="#F2A900" android:pathData="M40,57 h28 a2,2 0 0 1 2,2 v6 a2,2 0 0 1 -2,2 h-28 a2,2 0 0 1 -2,-2 v-6 a2,2 0 0 1 2,-2 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,47 m-5,0 a5,5 0 1 0 10,0 a5,5 0 1 0 -10,0" />
+</vector>

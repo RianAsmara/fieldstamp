@@ -73,6 +73,25 @@
     <string name="context_no_project">Tanpa proyek</string>
     <string name="context_no_activity">Tanpa kegiatan</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Lewati</string>
+    <string name="onboarding_next">Lanjut</string>
+    <string name="onboarding_start">Mulai</string>
+    <string name="onboarding_step">%1$d / %2$d</string>
+    <string name="onboarding_stamp_title">Foto lapangan langsung berstempel</string>
+    <string name="onboarding_stamp_body">Waktu, koordinat, dan nama lokasi tercetak di foto saat diambil. Semuanya dari jam dan GPS perangkat, bukan diketik.</string>
+    <string name="onboarding_report_title">Rapi per proyek, jadi laporan bulanan</string>
+    <string name="onboarding_report_body">Kelompokkan foto per proyek dan kegiatan, lalu susun laporan PDF bulanan dalam beberapa menit.</string>
+    <string name="onboarding_private_title">Tersimpan di perangkat Anda</string>
+    <string name="onboarding_private_body">Tanpa akun dan tanpa unggah. Izin kamera dan lokasi baru diminta saat Anda memakainya.</string>
+    <string name="onboarding_sample_place">Jakarta Pusat</string>
+    <string name="onboarding_sample_project">SD Negeri Contoh 01</string>
+    <string name="onboarding_sample_activity">Lomba mewarnai</string>
+    <string name="onboarding_sample_report">Laporan %1$s</string>
+    <string name="onboarding_no_account">Tanpa akun</string>
+    <string name="onboarding_no_upload">Tanpa unggah</string>
+    <string name="onboarding_offline">Bisa offline</string>
+
     <!-- Home -->
     <string name="home_today">Hari ini</string>
     <string name="settings_open_camera">Buka kamera saat aplikasi dibuka</string>
@@ -82,6 +101,8 @@
     <string name="home_projects_empty">Buat proyek untuk mengelompokkan foto</string>
     <string name="home_templates_empty">Impor bingkai PNG dari Canva atau aplikasi desain lain</string>
     <string name="home_manage">Kelola</string>
+    <string name="home_latest_report">Laporan terakhir</string>
+    <string name="home_today_count_label">foto hari ini</string>
     <string name="home_report_hint">Susun laporan bulanan dari foto Anda</string>
     <string name="import_failed">Gambar tidak dapat dibuka. Pilih berkas JPEG atau PNG lain.</string>
 
@@ -114,6 +135,7 @@
     <string name="camera_shutter">Ambil foto</string>
     <string name="camera_switch">Ganti kamera</string>
     <string name="camera_saved">Foto tersimpan</string>
+    <string name="camera_open_latest">Buka foto terakhir</string>
     <string name="camera_flash_auto">Lampu kilat: otomatis</string>
     <string name="camera_flash_on">Lampu kilat: menyala</string>
     <string name="camera_flash_off">Lampu kilat: mati</string>
@@ -457,6 +479,10 @@
     <string name="privacy_licenses_body">Huruf IBM Plex Sans dan IBM Plex Mono © IBM Corp., dilisensikan dengan SIL Open Font License 1.1. Komponen AndroidX, Kotlin, Coil, dan Google Play Billing Library dilisensikan dengan Apache License 2.0 atau ketentuan Google yang berlaku.</string>
 
     <!-- Plurals (Indonesian has no grammatical plural; only "other" is used) -->
+    <plurals name="photo_count_today">
+        <item quantity="one">%d foto hari ini</item>
+        <item quantity="other">%d foto hari ini</item>
+    </plurals>
     <plurals name="photo_count">
         <item quantity="other">%d foto</item>
     </plurals>
