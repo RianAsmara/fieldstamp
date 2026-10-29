@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">FieldStamp</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_photos">Foto</string>
+    <string name="nav_reports">Laporan</string>
+    <string name="nav_settings">Setelan</string>
+
+    <!-- Common actions -->
+    <string name="action_back">Kembali</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_edit">Ubah</string>
+    <string name="action_more">Opsi lainnya</string>
+    <string name="action_retry">Coba lagi</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_discard">Buang</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_open">Buka PDF</string>
+    <string name="action_print">Cetak</string>
+    <string name="action_export">Ekspor</string>
+    <string name="action_remove">Hapus</string>
+    <string name="action_choose">Pilih</string>
+    <string name="action_search">Cari</string>
+    <string name="action_see_all">Lihat semua</string>
+    <string name="action_archive">Arsipkan</string>
+    <string name="action_unarchive">Aktifkan kembali</string>
+    <string name="action_move_up">Pindah ke atas</string>
+    <string name="action_move_down">Pindah ke bawah</string>
+    <string name="action_take_photo">Ambil foto</string>
+    <string name="action_import_photo">Impor dari galeri</string>
+    <string name="action_retake">Ulangi</string>
+    <string name="action_allow_camera">Izinkan kamera</string>
+    <string name="action_open_settings">Buka setelan aplikasi</string>
+    <string name="action_retry_location">Cari lokasi lagi</string>
+    <string name="action_save_gallery">Simpan ke galeri</string>
+    <string name="action_save_as_file">Simpan sebagai berkas…</string>
+    <string name="action_open_map">Buka di aplikasi peta</string>
+    <string name="action_clear_filters">Hapus filter</string>
+    <string name="action_clear_selection">Batalkan pilihan</string>
+    <string name="action_previous_year">Tahun sebelumnya</string>
+    <string name="action_next_year">Tahun berikutnya</string>
+
+    <!-- Fields -->
+    <string name="field_name">Nama</string>
+    <string name="field_description_optional">Deskripsi (opsional)</string>
+    <string name="field_project">Proyek</string>
+    <string name="field_activity">Kegiatan</string>
+    <string name="field_caption">Keterangan</string>
+    <string name="field_category">Kategori</string>
+    <string name="field_category_optional">Kategori (opsional)</string>
+    <string name="field_time">Waktu</string>
+    <string name="field_time_zone">Zona waktu</string>
+    <string name="field_coordinates">Koordinat</string>
+    <string name="field_place_name">Nama lokasi</string>
+    <string name="field_location_time">Waktu lokasi</string>
+    <string name="field_source">Sumber</string>
+    <string name="field_template">Template</string>
+    <string name="field_template_name">Nama template</string>
+    <string name="field_custom_text">Teks tambahan</string>
+    <string name="field_dimensions">Ukuran</string>
+    <string name="field_period">Periode</string>
+    <string name="field_report_title">Judul laporan</string>
+    <string name="field_report_notes">Catatan pembuka (opsional)</string>
+    <string name="field_report_closing">Catatan penutup (opsional)</string>
+    <string name="field_prepared_by">Disusun oleh</string>
+    <string name="field_prepared_by_default">Nama penyusun laporan (bawaan)</string>
+    <string name="field_organization">Nama instansi/organisasi</string>
+
+    <string name="context_no_project">Tanpa proyek</string>
+    <string name="context_no_activity">Tanpa kegiatan</string>
+
+    <!-- Home -->
+    <string name="home_context_hint">Foto baru dicatat ke proyek dan kegiatan ini.</string>
+    <string name="home_template_active">Template aktif: %1$s</string>
+    <string name="home_template_basic">Stempel teks dasar aktif. Atur template di Setelan.</string>
+    <string name="home_today">Hari ini</string>
+    <string name="home_today_empty">Belum ada foto hari ini.</string>
+    <string name="home_manage">Kelola</string>
+    <string name="home_report_hint">Susun laporan bulanan dari foto Anda</string>
+    <string name="import_failed">Gambar tidak dapat dibuka. Pilih berkas JPEG atau PNG lain.</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Proyek &amp; kegiatan</string>
+    <string name="projects_empty_title">Belum ada proyek</string>
+    <string name="projects_empty_body">Proyek membantu mengelompokkan foto dan menyaring laporan. Foto tetap bisa diambil tanpa proyek.</string>
+    <string name="projects_archived">Diarsipkan</string>
+    <string name="project_create">Proyek baru</string>
+    <string name="project_edit">Ubah proyek</string>
+    <string name="project_delete_title">Hapus proyek?</string>
+    <string name="project_delete_body">Foto, kegiatan, dan laporan tidak dihapus. Hubungannya dengan proyek ini akan dilepas.</string>
+    <string name="project_missing_title">Proyek tidak ditemukan</string>
+    <string name="project_missing_body">Proyek ini mungkin sudah dihapus.</string>
+    <string name="project_archived_note">Proyek diarsipkan. Tidak muncul di pilihan proyek untuk foto baru.</string>
+    <string name="project_view_photos_hint">Lihat foto proyek ini</string>
+    <string name="activities_title">Kegiatan</string>
+    <string name="activities_empty">Belum ada kegiatan di proyek ini.</string>
+    <string name="activity_create">Kegiatan baru</string>
+    <string name="activity_edit">Ubah kegiatan</string>
+    <string name="activity_delete_title">Hapus kegiatan?</string>
+    <string name="activity_delete_body">Foto tidak dihapus. Hubungannya dengan kegiatan ini akan dilepas.</string>
+
+    <!-- Camera -->
+    <string name="camera_permission_title">Akses kamera diperlukan</string>
+    <string name="camera_permission_body">FieldStamp memakai kamera hanya saat Anda mengambil foto dokumentasi. Foto disimpan di perangkat ini.</string>
+    <string name="camera_permission_settings_body">Akses kamera ditolak. Buka setelan aplikasi untuk mengizinkannya, atau impor foto dari galeri.</string>
+    <string name="camera_error_init">Kamera tidak dapat dibuka. Tutup aplikasi lain yang memakai kamera, lalu coba lagi.</string>
+    <string name="camera_error_capture">Foto gagal diambil. Coba lagi.</string>
+    <string name="camera_shutter">Ambil foto</string>
+    <string name="camera_switch">Ganti kamera</string>
+    <string name="camera_saved">Foto tersimpan</string>
+    <string name="camera_flash_auto">Lampu kilat: otomatis</string>
+    <string name="camera_flash_on">Lampu kilat: menyala</string>
+    <string name="camera_flash_off">Lampu kilat: mati</string>
+    <string name="gps_off">Lokasi mati</string>
+    <string name="gps_no_permission">Izinkan lokasi</string>
+    <string name="gps_disabled">Layanan lokasi mati</string>
+    <string name="gps_searching">Mencari lokasi…</string>
+    <string name="gps_unavailable">Lokasi tidak tersedia</string>
+    <string name="gps_fixed">Lokasi siap</string>
+    <string name="gps_fixed_accuracy">±%1$d m</string>
+    <string name="location_permission_denied">Izin lokasi tidak diberikan</string>
+    <string name="location_services_disabled">Layanan lokasi perangkat mati</string>
+    <string name="location_unavailable">Lokasi belum didapat</string>
+    <string name="place_placeholder">mis. Desa Sukamaju, Kec. Cibinong</string>
+    <string name="place_searching">Mencari nama lokasi…</string>
+    <string name="place_found_hint">Dari layanan peta perangkat. Bisa diubah.</string>
+    <string name="place_manual_hint">Isi manual, atau terisi otomatis saat ada GPS dan internet.</string>
+    <string name="place_offline">Tidak ada internet. Isi manual atau cari lagi nanti dari detail foto.</string>
+    <string name="place_not_supported">Perangkat ini tidak mendukung pencarian nama lokasi. Isi manual.</string>
+    <string name="place_not_found">Nama lokasi tidak ditemukan untuk koordinat ini. Isi manual.</string>
+    <string name="place_no_coordinates">Foto ini tidak memiliki koordinat.</string>
+    <string name="place_lookup">Cari nama lokasi dari koordinat</string>
+    <string name="place_none">Tidak diisi</string>
+
+    <!-- Capture review -->
+    <string name="review_title">Tinjau foto</string>
+    <string name="review_title_import">Tinjau foto impor</string>
+    <string name="review_preview_description">Pratinjau foto berstempel</string>
+    <string name="review_preview_failed">Pratinjau gagal dibuat. Foto masih bisa disimpan.</string>
+    <string name="review_file_missing">Foto sementara tidak ditemukan. Ambil ulang foto.</string>
+    <string name="review_time_device">Waktu dari jam perangkat saat pemotretan.</string>
+    <string name="review_time_from_file">Waktu dari data EXIF berkas.</string>
+    <string name="review_time_import_fallback">Berkas tidak memiliki waktu pemotretan. Waktu impor dipakai.</string>
+    <string name="review_location_none">Tidak ada lokasi</string>
+    <string name="review_location_none_import">Berkas tidak memiliki data lokasi</string>
+    <string name="review_include_location">Sertakan koordinat</string>
+    <string name="review_include_location_hint">Matikan bila lokasi tidak boleh dicatat untuk foto ini.</string>
+    <string name="review_discard_title">Buang foto ini?</string>
+    <string name="review_discard_body">Foto belum disimpan dan akan dihapus.</string>
+    <string name="error_save_photo">Foto gagal disimpan. Coba lagi.</string>
+    <string name="error_render_photo">Stempel gagal dibuat ulang. Perubahan tidak disimpan.</string>
+    <string name="error_storage_full">Ruang penyimpanan hampir penuh. Kosongkan ruang lalu coba lagi.</string>
+
+    <!-- Stamp -->
+    <string name="stamp_label_project">Proyek</string>
+    <string name="stamp_label_activity">Kegiatan</string>
+    <string name="stamp_label_category">Kategori</string>
+    <string name="stamp_label_coordinates">Koordinat</string>
+    <string name="stamp_label_place">Lokasi</string>
+    <string name="stamp_field_datetime">Tanggal &amp; waktu</string>
+    <string name="stamp_field_project">Nama proyek</string>
+    <string name="stamp_field_activity">Nama kegiatan</string>
+    <string name="stamp_field_caption">Keterangan</string>
+    <string name="stamp_field_category">Kategori</string>
+    <string name="stamp_field_coordinates">Koordinat GPS (bila ada)</string>
+    <string name="stamp_field_place">Nama lokasi (bila ada)</string>
+    <string name="stamp_field_custom">Teks tambahan</string>
+    <string name="anchor_top_left">Kiri atas</string>
+    <string name="anchor_top_right">Kanan atas</string>
+    <string name="anchor_bottom_left">Kiri bawah</string>
+    <string name="anchor_bottom_center">Tengah bawah</string>
+    <string name="anchor_bottom_right">Kanan bawah</string>
+    <string name="anchor_custom">Atur sendiri</string>
+    <string name="template_box_hint">Geser kotak teks (garis kuning di pratinjau) ke area yang disediakan template. Teks otomatis mengecil agar muat.</string>
+    <string name="template_box_left">Kiri: %1$d%%</string>
+    <string name="template_box_top">Atas: %1$d%%</string>
+    <string name="template_box_width">Lebar: %1$d%%</string>
+    <string name="template_box_height">Tinggi: %1$d%%</string>
+    <string name="template_text_size_max">Ukuran teks maksimum: %1$.1f%%</string>
+    <string name="backdrop_shade">Gelap</string>
+    <string name="backdrop_template_color">Warna template</string>
+    <string name="backdrop_white">Putih</string>
+    <string name="backdrop_none">Tanpa</string>
+    <string name="backdrop_template_hint">Kotak diisi warna template di area itu, sehingga tulisan contoh di gambar (mis. [NAMA KEGIATAN]) tertutup. Pakai teks hitam untuk panel terang.</string>
+    <string name="color_white">Putih</string>
+    <string name="color_black">Hitam</string>
+
+    <!-- Templates -->
+    <string name="templates_title">Template</string>
+    <string name="templates_intro">Impor PNG transparan, atau JPG/PNG dengan area foto berwarna putih, dari Canva atau aplikasi desain lain. Area transparan akan menampilkan foto. Teks di dalam PNG tidak diubah; FieldStamp hanya menambahkan kolom yang Anda pilih.</string>
+    <string name="templates_active_heading">Dipakai untuk foto baru</string>
+    <string name="templates_how_to">Cara membuat di Canva: buat bingkai/kop, biarkan area foto kosong, lalu Bagikan › Unduh › PNG › centang \"Latar belakang transparan\". Tanpa Canva Pro: isi area foto dengan putih polos dan unduh sebagai PNG/JPG; FieldStamp akan menjadikan area putih itu transparan.</string>
+    <string name="template_basic_name">Stempel teks dasar</string>
+    <string name="template_basic_desc">Tanpa bingkai PNG, hanya teks</string>
+    <string name="template_basic_editor_hint">Atur kolom teks yang tampil saat tidak memakai template PNG.</string>
+    <string name="template_import">Impor PNG</string>
+    <string name="template_new_title">Template baru</string>
+    <string name="template_in_use">Dipakai</string>
+    <string name="template_source_missing">Berkas PNG hilang</string>
+    <string name="template_source_missing_long">Berkas PNG template ini tidak ditemukan. Hapus template lalu impor ulang.</string>
+    <string name="template_delete_title">Hapus template?</string>
+    <string name="template_delete_body">Foto yang sudah dibuat tidak berubah. Template tidak bisa dipakai lagi untuk foto baru.</string>
+    <string name="template_limit_notice">Versi gratis menyimpan %1$d template PNG. Template yang ada tetap bisa dipakai dan diubah.</string>
+    <string name="template_error_not_png">Berkas ini tidak dapat dipakai. Pilih gambar PNG atau JPG.</string>
+    <string name="template_error_no_transparency">PNG ini tidak memiliki area transparan, sehingga foto akan tertutup. Di Canva: Bagikan › Unduh › PNG › centang \"Latar belakang transparan\", dan hapus elemen yang menutupi area foto.</string>
+    <string name="template_error_too_small">Gambar terlalu kecil. Sisi terpendek minimal %1$d px.</string>
+    <string name="template_error_too_large">Gambar terlalu besar. Sisi terpanjang maksimal %1$d px.</string>
+    <string name="template_error_title">Berkas tidak bisa dipakai sebagai template</string>
+    <string name="template_choose_other">Pilih berkas lain</string>
+    <string name="template_key_title">Gambar ini tidak transparan</string>
+    <string name="template_key_body">FieldStamp bisa menjadikan area putih terbesar (tempat foto) transparan. Teks dan logo berwarna putih yang kecil tetap utuh. Pastikan area foto di desain Anda berwarna putih polos. Hasilnya dapat diperiksa di pratinjau sebelum disimpan. Berkas asli Anda tidak diubah.</string>
+    <string name="template_key_confirm">Jadikan putih transparan</string>
+    <string name="template_key_working">Memproses…</string>
+    <string name="template_error_no_white">Tidak ditemukan area putih yang cukup luas untuk foto. Di desain, isi area foto dengan warna putih polos (#FFFFFF), lalu unduh ulang.</string>
+    <string name="template_error_unreadable">Berkas tidak dapat dibaca.</string>
+    <string name="template_preview_description">Pratinjau template</string>
+    <string name="template_preview_failed">Pratinjau tidak dapat dibuat. Template tetap dapat disimpan; periksa hasilnya pada foto pertama.</string>
+    <string name="template_preview_sample_note">Pratinjau memakai data contoh. Nilai sebenarnya diambil dari setiap foto.</string>
+    <string name="template_fields_heading">Kolom yang ditampilkan</string>
+    <string name="template_fields_hint">Urutan dari atas ke bawah. Kolom tanpa nilai (mis. tanpa GPS) tidak ditampilkan.</string>
+    <string name="template_position_heading">Posisi &amp; tampilan</string>
+    <string name="template_text_size">Ukuran teks: %1$.1f%%</string>
+    <string name="template_text_color">Warna teks</string>
+    <string name="template_backdrop">Latar teks</string>
+    <string name="template_backdrop_hint">Panel gelap transparan agar teks terbaca di foto yang ramai.</string>
+    <string name="template_24h">Format 24 jam</string>
+    <string name="editor_discard_title">Buang perubahan?</string>
+    <string name="editor_discard_body">Perubahan yang belum disimpan akan hilang.</string>
+
+    <!-- Photos -->
+    <string name="photos_empty_title">Belum ada foto</string>
+    <string name="photos_empty_body">Foto yang Anda ambil atau impor tersimpan di perangkat ini dan muncul di sini, dikelompokkan per tanggal.</string>
+    <string name="photos_no_results_title">Tidak ada foto yang cocok</string>
+    <string name="photos_no_results_body">Ubah atau hapus filter untuk melihat foto lain.</string>
+    <string name="photos_search_hint">Cari keterangan, lokasi, proyek</string>
+    <string name="filter_all_time">Semua waktu</string>
+    <string name="filter_all_projects">Semua proyek</string>
+    <string name="filter_all_activities">Semua kegiatan</string>
+    <string name="filter_no_caption">Tanpa keterangan</string>
+    <string name="filter_no_gps">Tanpa GPS</string>
+    <string name="photo_flag_no_caption">Tanpa keterangan</string>
+    <string name="photo_flag_no_gps">Tanpa GPS</string>
+    <string name="photo_file_missing">Berkas hilang</string>
+    <string name="photo_no_caption">Tanpa keterangan</string>
+    <string name="photo_no_location">Tidak dicatat</string>
+    <string name="photo_detail_title">Detail foto</string>
+    <string name="photo_view_stamped">Berstempel</string>
+    <string name="photo_view_original">Asli</string>
+    <string name="photo_original_missing">Berkas foto asli tidak ditemukan. Stempel tidak bisa dibuat ulang.</string>
+    <string name="photo_metadata_heading">Data foto</string>
+    <string name="photo_missing_title">Foto tidak ditemukan</string>
+    <string name="photo_missing_body">Foto ini mungkin sudah dihapus.</string>
+    <string name="photo_integrity_note">Waktu berasal dari jam perangkat dan koordinat dari layanan lokasi perangkat. Keduanya tidak diverifikasi pihak lain dan dapat diubah oleh aplikasi lain setelah dibagikan.</string>
+    <string name="photo_edit_title">Ubah data foto</string>
+    <string name="photo_edit_hint">Stempel dibuat ulang dari foto asli. Waktu dan lokasi tidak dapat diubah.</string>
+    <string name="photo_edit_save">Simpan &amp; buat ulang stempel</string>
+    <string name="photo_delete_body">Foto asli dan berstempel dihapus dari perangkat. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="source_camera">Kamera FieldStamp</string>
+    <string name="source_import">Diimpor dari galeri</string>
+    <string name="export_saved_gallery">Tersimpan di Galeri › Pictures/FieldStamp</string>
+    <string name="export_saved_file">Berkas tersimpan</string>
+    <string name="export_failed">Berkas gagal disimpan. Periksa ruang penyimpanan lalu coba lagi.</string>
+    <string name="error_no_map_app">Tidak ada aplikasi peta di perangkat ini.</string>
+    <string name="error_no_pdf_viewer">Tidak ada aplikasi pembuka PDF. Gunakan Bagikan atau Simpan sebagai berkas.</string>
+    <string name="month_picker_title">Pilih bulan</string>
+
+    <!-- Reports -->
+    <string name="reports_empty_title">Belum ada laporan</string>
+    <string name="reports_empty_body">Laporan bulanan disusun dari foto Anda, dikelompokkan per tanggal, lalu dibuat menjadi PDF di perangkat ini.</string>
+    <string name="report_create">Buat laporan</string>
+    <string name="report_create_action">Buat draf laporan</string>
+    <string name="report_create_intro">Semua foto pada bulan dan proyek yang dipilih akan disertakan. Anda dapat mengeluarkan atau mengurutkan foto pada langkah berikutnya.</string>
+    <string name="report_create_no_photos">Belum ada foto pada periode ini. Draf tetap bisa dibuat dan diisi nanti.</string>
+    <string name="report_default_title">Laporan Dokumentasi Kegiatan</string>
+    <string name="report_status_draft">Draf</string>
+    <string name="report_status_generated">PDF siap</string>
+    <string name="report_status_outdated">PDF perlu diperbarui</string>
+    <string name="report_status_failed">Gagal dibuat</string>
+    <string name="report_generated_at">PDF %1$s</string>
+    <string name="report_tab_photos">Foto</string>
+    <string name="report_tab_settings">Pengaturan</string>
+    <string name="report_tab_pdf">PDF</string>
+    <string name="report_photos_hint">Urutan awal sesuai waktu pemotretan. Hari tanpa foto tidak dicantumkan di PDF; itu tidak berarti tidak ada kegiatan.</string>
+    <string name="report_no_photos_title">Belum ada foto pada periode ini</string>
+    <string name="report_no_photos_body">Ambil atau impor foto dengan tanggal di dalam periode laporan, lalu kembali ke sini.</string>
+    <string name="report_item_deleted">Foto sumber sudah dihapus</string>
+    <string name="report_item_moved">Diambil %1$s, dimasukkan ke tanggal ini</string>
+    <string name="report_caption_override_label">Keterangan khusus laporan</string>
+    <string name="report_edit_caption">Ubah keterangan di laporan</string>
+    <string name="report_caption_dialog_hint">Hanya berlaku di laporan ini. Keterangan pada foto tidak berubah.</string>
+    <string name="report_caption_reset">Pakai keterangan foto</string>
+    <string name="report_change_date">Pindahkan ke tanggal lain</string>
+    <string name="report_date_dialog_hint">Foto diambil %1$s. Waktu pemotretan tetap tercatat apa adanya.</string>
+    <string name="report_exclude">Keluarkan dari laporan</string>
+    <string name="report_include">Sertakan</string>
+    <string name="report_include_all">Sertakan semua</string>
+    <string name="report_remove_missing">Keluarkan foto yang hilang</string>
+    <string name="report_missing_items_title">Ada foto yang hilang</string>
+    <string name="report_generate">Buat PDF</string>
+    <string name="report_regenerate">Perbarui PDF</string>
+    <string name="report_regenerate_title">Perbarui PDF?</string>
+    <string name="report_regenerate_body">PDF lama akan diganti. Keterangan, nama proyek/kegiatan, dan koordinat diambil ulang dari data foto saat ini.</string>
+    <string name="report_large_title">Laporan besar</string>
+    <string name="report_large_body">Laporan berisi %1$d foto. Pembuatan PDF bisa memakan beberapa menit dan menghasilkan berkas besar. Semua foto tetap disertakan.</string>
+    <string name="report_generating">Menyiapkan PDF…</string>
+    <string name="report_generating_progress">Menyusun PDF… %1$d dari %2$d foto</string>
+    <string name="report_generated_toast">PDF berhasil dibuat</string>
+    <string name="report_generation_cancelled">Pembuatan PDF dibatalkan. PDF sebelumnya tidak berubah.</string>
+    <string name="report_last_attempt_failed">Percobaan terakhir gagal. PDF sebelumnya (bila ada) tetap tersedia.</string>
+    <string name="report_error_missing">Ada foto yang hilang. Keluarkan dari laporan untuk melanjutkan.</string>
+    <string name="report_error_empty">Belum ada foto yang disertakan.</string>
+    <string name="report_error_image">Salah satu foto tidak dapat dibaca. Periksa foto bertanda berkas hilang.</string>
+    <string name="report_error_unknown">PDF gagal dibuat. Tidak ada berkas setengah jadi yang disimpan. Coba lagi.</string>
+    <string name="report_include_gps">Cantumkan lokasi</string>
+    <string name="report_include_gps_hint">Nama lokasi dan koordinat, bila ada.</string>
+    <string name="report_use_stamped">Gunakan foto berstempel</string>
+    <string name="report_use_stamped_hint">Matikan untuk memakai foto asli tanpa stempel.</string>
+    <string name="report_signature_block">Kolom tanda tangan</string>
+    <string name="report_signature_hint">Ruang kosong untuk tanda tangan manual setelah dicetak.</string>
+    <string name="report_layout_heading">Tata letak foto</string>
+    <string name="layout_standard">2 foto per baris</string>
+    <string name="layout_large">1 foto besar</string>
+    <string name="layout_compact">3 foto per baris</string>
+    <string name="report_layout_downgraded">Tata letak ini memerlukan Pro. Tanpa Pro, PDF memakai 2 foto per baris.</string>
+    <string name="report_branding">Nama &amp; logo instansi</string>
+    <string name="report_branding_hint">Diatur di Setelan › Laporan.</string>
+    <string name="report_branding_not_set">Belum diatur. Isi di Setelan › Laporan.</string>
+    <string name="report_pdf_none">PDF belum dibuat. Tinjau foto dan pengaturan, lalu ketuk Buat PDF.</string>
+    <string name="report_pdf_outdated">Foto atau pengaturan berubah setelah PDF ini dibuat. PDF tidak ikut berubah sampai Anda memperbaruinya.</string>
+    <string name="report_pdf_file_missing">Berkas PDF tidak ditemukan. Buat ulang PDF.</string>
+    <string name="report_zip_title">Arsip ZIP foto</string>
+    <string name="report_zip_hint">JPEG per folder tanggal dan manifest.csv.</string>
+    <string name="report_integrity_note">PDF ini adalah dokumentasi, bukan sertifikasi. Waktu dan lokasi berasal dari perangkat dan tidak diverifikasi pihak lain. Kolom tanda tangan bukan tanda tangan elektronik tersertifikasi.</string>
+    <string name="report_delete">Hapus laporan</string>
+    <string name="report_delete_title">Hapus laporan?</string>
+    <string name="report_delete_body">Laporan dan PDF-nya dihapus. Foto tidak ikut terhapus.</string>
+    <string name="report_missing_title">Laporan tidak ditemukan</string>
+    <string name="report_missing_body">Laporan ini mungkin sudah dihapus.</string>
+
+    <!-- PDF content -->
+    <string name="pdf_period">Periode: %1$s</string>
+    <string name="pdf_scope_project">Proyek: %1$s</string>
+    <string name="pdf_scope_activity">Kegiatan: %1$s</string>
+    <string name="pdf_generated">Dibuat %1$s dengan FieldStamp</string>
+    <string name="pdf_summary_heading">Ringkasan</string>
+    <string name="pdf_summary_photos">Jumlah foto</string>
+    <string name="pdf_summary_days">Hari terdokumentasi</string>
+    <string name="pdf_summary_by_activity">Per kegiatan</string>
+    <string name="pdf_summary_no_activity">Tanpa kegiatan</string>
+    <string name="pdf_notes_heading">Catatan</string>
+    <string name="pdf_continued">(lanjutan)</string>
+    <string name="pdf_meta_project">Proyek: %1$s</string>
+    <string name="pdf_meta_category">Kategori: %1$s</string>
+    <string name="pdf_closing_heading">Penutup</string>
+    <string name="pdf_prepared_by">Disusun oleh</string>
+    <string name="pdf_approved_by">Mengetahui / Menyetujui</string>
+    <string name="pdf_disclaimer">Waktu dan koordinat dicatat oleh perangkat pengguna dan tidak diverifikasi secara independen. Dokumen ini bukan dokumen bersertifikat elektronik.</string>
+    <string name="pdf_empty">Tidak ada foto pada periode ini.</string>
+    <string name="pdf_footer">%1$s · Halaman %2$d dari %3$d</string>
+
+    <!-- Settings -->
+    <string name="settings_capture">Pengambilan foto</string>
+    <string name="settings_record_location">Catat lokasi</string>
+    <string name="settings_record_location_hint">Koordinat dicatat bila izin diberikan. Foto tetap tersimpan tanpa lokasi.</string>
+    <string name="settings_embed_gps">Simpan GPS di EXIF</string>
+    <string name="settings_embed_gps_hint">Koordinat ikut tersimpan di berkas JPEG yang dibagikan.</string>
+    <string name="settings_auto_place">Nama lokasi otomatis</string>
+    <string name="settings_auto_place_hint">Memerlukan internet. Koordinat foto dikirim ke layanan geocoding perangkat (Google pada sebagian besar ponsel) untuk mendapatkan nama jalan dan wilayah.</string>
+    <string name="settings_basic_stamp">Stempel teks dasar</string>
+    <string name="settings_basic_stamp_hint">Kolom dan posisi teks tanpa template PNG</string>
+    <string name="settings_templates_hint">Impor dan pilih template PNG</string>
+    <string name="settings_reports">Laporan</string>
+    <string name="settings_branding">Identitas instansi di sampul laporan</string>
+    <string name="settings_branding_hint">Nama dan logo tampil di bagian atas PDF bila diaktifkan di laporan.</string>
+    <string name="settings_branding_hint_free">Bisa diisi sekarang; tampil di PDF dengan FieldStamp Pro.</string>
+    <string name="settings_logo">Logo instansi</string>
+    <string name="settings_logo_choose">Pilih logo</string>
+    <string name="settings_logo_change">Ganti logo</string>
+    <string name="logo_error">Logo tidak dapat dibuka. Pilih gambar lain.</string>
+    <string name="settings_pro">FieldStamp Pro</string>
+    <string name="settings_debug_pro">Mode uji Pro (debug)</string>
+    <string name="settings_debug_pro_hint">Hanya ada di build debug. Tidak berlaku di versi rilis.</string>
+    <string name="settings_storage">Penyimpanan</string>
+    <string name="settings_storage_loading">Menghitung…</string>
+    <string name="settings_storage_value">Foto &amp; template: %1$s\nPDF laporan: %2$s\nRuang kosong: %3$s</string>
+    <string name="settings_storage_note">Data hanya ada di perangkat ini dan tidak dicadangkan otomatis. Menghapus aplikasi akan menghapus semua foto dan laporan; ekspor dulu yang perlu disimpan.</string>
+    <string name="settings_about">Tentang</string>
+    <string name="settings_privacy_hint">Data apa yang disimpan dan apa yang dikirim</string>
+    <string name="settings_version">Versi</string>
+
+    <!-- Pro / billing -->
+    <string name="pro_badge">Pro</string>
+    <string name="pro_title">FieldStamp Pro</string>
+    <string name="pro_intro">Pembelian satu kali untuk kebutuhan dokumentasi yang lebih lengkap. Tanpa langganan dan tanpa akun.</string>
+    <string name="pro_includes">Pro menambahkan</string>
+    <string name="pro_feature_templates">Template PNG tanpa batas</string>
+    <string name="pro_feature_branding">Nama dan logo instansi di sampul laporan</string>
+    <string name="pro_feature_layouts">Tata letak laporan 1 foto besar dan 3 foto per baris</string>
+    <string name="pro_feature_zip">Ekspor arsip ZIP foto laporan per tanggal</string>
+    <string name="pro_free_includes">Tetap gratis</string>
+    <string name="free_feature_capture">Foto berstempel waktu dan GPS tanpa batas</string>
+    <string name="free_feature_template">%1$d template PNG dan stempel teks dasar</string>
+    <string name="free_feature_reports">Laporan PDF bulanan tanpa batas</string>
+    <string name="free_feature_export">Bagikan dan simpan foto serta PDF</string>
+    <string name="free_feature_offline">Bekerja tanpa internet</string>
+    <string name="pro_terms">Pembelian diproses Google Play dan memerlukan internet. Setelah aktif, Pro tetap berlaku tanpa internet dan diperiksa ulang ke Google Play saat tersambung. Bila Pro berakhir, semua foto, laporan, dan template yang sudah ada tetap bisa dibuka, diekspor, dan dihapus.</string>
+    <string name="pro_buy">Beli Pro · %1$s</string>
+    <string name="pro_loading">Memuat harga dari Google Play…</string>
+    <string name="pro_not_configured">Pembelian Pro belum dikonfigurasi pada build ini.</string>
+    <string name="pro_not_found">Pro belum tersedia di Google Play untuk akun ini.</string>
+    <string name="pro_unavailable">Google Play tidak dapat dihubungi. Periksa koneksi internet. Fitur gratis tetap berfungsi tanpa internet.</string>
+    <string name="pro_active_notice">Pro aktif di perangkat ini. Terima kasih.</string>
+    <string name="pro_learn_more">Tentang Pro</string>
+    <string name="pro_status_active">Pro aktif</string>
+    <string name="pro_status_free">Versi gratis</string>
+    <string name="pro_status_free_hint">Lihat fitur Pro</string>
+    <string name="pro_source_verified">Dikonfirmasi Google Play</string>
+    <string name="pro_source_cached">Terakhir dikonfirmasi %1$s</string>
+    <string name="pro_source_debug">Mode uji debug</string>
+    <string name="billing_restore">Pulihkan pembelian</string>
+    <string name="billing_restoring">Memeriksa pembelian…</string>
+    <string name="billing_restored">Pro dipulihkan</string>
+    <string name="billing_nothing_to_restore">Tidak ada pembelian Pro pada akun Google Play ini.</string>
+    <string name="billing_restore_failed">Tidak dapat menghubungi Google Play. Coba lagi saat tersambung internet.</string>
+    <string name="billing_purchased">Pro aktif. Terima kasih.</string>
+    <string name="billing_pending">Pembayaran sedang diproses. Pro aktif setelah pembayaran selesai.</string>
+    <string name="billing_cancelled">Pembelian dibatalkan.</string>
+    <string name="billing_failed">Pembelian gagal. Tidak ada biaya yang ditagih. Coba lagi.</string>
+    <string name="billing_verification_failed">Pembelian tidak dapat diverifikasi. Hubungi dukungan bila saldo terpotong.</string>
+
+    <!-- Privacy -->
+    <string name="privacy_title">Privasi &amp; data</string>
+    <string name="privacy_local_title">Data tersimpan di perangkat</string>
+    <string name="privacy_local_body">Foto, keterangan, proyek, template, dan laporan disimpan di penyimpanan internal aplikasi pada perangkat ini. FieldStamp tidak memakai akun, server, analitik, atau iklan, dan tidak mengunggah foto. Satu-satunya data yang dikirim adalah koordinat untuk pencarian nama lokasi (bila diaktifkan) dan data pembelian ke Google Play. Data aplikasi tidak disertakan dalam cadangan otomatis Android.</string>
+    <string name="privacy_permissions_title">Izin yang dipakai</string>
+    <string name="privacy_permissions_body">Kamera: diminta saat Anda membuka kamera. Lokasi: diminta saat pencatatan lokasi aktif, hanya saat aplikasi dipakai (bukan di latar belakang); lokasi perkiraan juga didukung. Foto dari galeri dipilih lewat pemilih foto Android, tanpa izin akses semua media.</string>
+    <string name="privacy_location_title">Lokasi</string>
+    <string name="privacy_location_body">Koordinat hanya dicatat bila perangkat memberikannya. Bila tidak tersedia, foto disimpan tanpa koordinat; tidak ada lokasi pengganti. Untuk foto impor hanya lokasi dari data EXIF berkas yang dipakai. Bila \"Nama lokasi otomatis\" aktif dan ada internet, koordinat foto dikirim ke layanan geocoding perangkat (Google pada sebagian besar ponsel Android) untuk mendapatkan nama jalan dan wilayah. Fitur ini, pencatatan lokasi, dan GPS di EXIF dapat dimatikan di Setelan.</string>
+    <string name="privacy_sharing_title">Berbagi</string>
+    <string name="privacy_sharing_body">Berkas hanya keluar dari aplikasi saat Anda memilih Bagikan, Simpan, Cetak, atau Ekspor. Berkas JPEG yang dibagikan dapat memuat waktu, keterangan, dan koordinat dalam data EXIF.</string>
+    <string name="privacy_billing_title">Google Play</string>
+    <string name="privacy_billing_body">Pembelian Pro diproses oleh Google Play Billing. Google memproses data pembelian sesuai kebijakan privasinya. FieldStamp hanya menyimpan status Pro dan sidik (hash) token pembelian di perangkat.</string>
+    <string name="privacy_integrity_title">Batasan</string>
+    <string name="privacy_integrity_body">FieldStamp adalah alat dokumentasi, bukan sistem forensik atau sertifikasi. Waktu berasal dari jam perangkat yang dapat diubah pengguna, dan data EXIF dapat diubah atau dihapus aplikasi lain.</string>
+    <string name="privacy_delete_title">Menghapus data</string>
+    <string name="privacy_delete_body">Hapus foto, template, atau laporan langsung di aplikasi. Menghapus aplikasi atau data aplikasi menghapus semuanya secara permanen.</string>
+    <string name="privacy_licenses_title">Lisensi</string>
+    <string name="privacy_licenses_body">Huruf IBM Plex Sans dan IBM Plex Mono © IBM Corp., dilisensikan dengan SIL Open Font License 1.1. Komponen AndroidX, Kotlin, Coil, dan Google Play Billing Library dilisensikan dengan Apache License 2.0 atau ketentuan Google yang berlaku.</string>
+
+    <!-- Plurals (Indonesian has no grammatical plural; only "other" is used) -->
+    <plurals name="photo_count">
+        <item quantity="other">%d foto</item>
+    </plurals>
+    <plurals name="day_count">
+        <item quantity="other">%d hari</item>
+    </plurals>
+    <plurals name="activity_count">
+        <item quantity="other">%d kegiatan</item>
+    </plurals>
+    <plurals name="project_count">
+        <item quantity="other">%d proyek</item>
+    </plurals>
+    <plurals name="template_count">
+        <item quantity="other">%d template PNG</item>
+    </plurals>
+    <plurals name="selected_count">
+        <item quantity="other">%d dipilih</item>
+    </plurals>
+    <plurals name="photo_delete_title">
+        <item quantity="other">Hapus %d foto?</item>
+    </plurals>
+    <plurals name="photo_delete_used_body">
+        <item quantity="other">Foto ini dipakai di %d laporan. Laporan akan menandai foto sebagai hilang, dan PDF yang sudah dibuat tidak berubah. Foto asli dan berstempel dihapus dari perangkat.</item>
+    </plurals>
+    <plurals name="report_create_matching">
+        <item quantity="other">%1$d foto dari %2$d hari akan disertakan.</item>
+    </plurals>
+    <plurals name="report_excluded_count">
+        <item quantity="other">%d foto lain pada tanggal ini tidak disertakan</item>
+    </plurals>
+    <plurals name="report_missing_items_body">
+        <item quantity="other">%d foto di laporan ini sudah dihapus atau berkasnya hilang. Keluarkan dari laporan sebelum membuat PDF.</item>
+    </plurals>
+    <plurals name="report_no_caption_notice">
+        <item quantity="other">%d foto belum memiliki keterangan. Foto tetap disertakan; tambahkan keterangan bila perlu.</item>
+    </plurals>
+</resources>

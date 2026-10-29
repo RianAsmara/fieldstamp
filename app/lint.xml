@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Indonesian has no grammatical plural ("3 foto", "1 foto"); quantity strings add nothing here. -->
+    <issue id="PluralsCandidate" severity="ignore" />
+    <!-- targetSdk 36 is the current Google Play requirement; 37 is compiled against but not yet targeted. -->
+    <issue id="OldTargetApi" severity="informational" />
+    <!-- AAPT does not resolve <adaptive-icon> from plain mipmap-anydpi in this toolchain; keep -v26. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

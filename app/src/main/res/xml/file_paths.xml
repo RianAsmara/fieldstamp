@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only these app-owned directories can be shared, and only when the user shares a specific file. -->
+<paths>
+    <files-path name="rendered" path="photos/rendered/" />
+    <files-path name="original" path="photos/original/" />
+    <files-path name="reports" path="reports/" />
+    <files-path name="exports" path="tmp/" />
+</paths>
