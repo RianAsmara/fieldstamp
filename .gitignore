@@ -13,3 +13,4 @@
 *.keystore
 keystore.properties
 signing.properties
+design/*.zip
